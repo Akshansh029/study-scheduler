@@ -12,17 +12,13 @@ import {
   Clock,
   Target,
   TrendingUp,
-  ArrowRight,
   Repeat,
   BookOpen,
-  Award,
   Lightbulb,
   BarChart3,
+  GraduationCap,
 } from "lucide-react";
-import {
-  LoginLink,
-  RegisterLink,
-} from "@kinde-oss/kinde-auth-nextjs/components";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
 
 export default function LandingPage() {
   return (
@@ -65,25 +61,25 @@ export default function LandingPage() {
             </Link>
           </nav>
           <div className="flex items-center gap-3">
-            <Button variant="outline" asChild>
-              <LoginLink>Sign In</LoginLink>
+            <Button variant="outline" asChild className="cursor-pointer">
+              <SignInButton />
             </Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700" asChild>
-              <RegisterLink>Get Started</RegisterLink>
+            <Button asChild className="cursor-pointer">
+              <SignUpButton />
             </Button>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-indigo-50/50 to-white px-4 py-24">
+      <section className="bg-gradient-to-b from-indigo-50/50 to-white px-4 py-20">
         <div className="container mx-auto max-w-5xl text-center">
           <Badge
             variant="secondary"
             className="mb-6 border-indigo-200 bg-indigo-100 text-indigo-700"
           >
-            <Award className="mr-2 h-4 w-4" />
-            Trusted by 50,000+ students worldwide
+            <GraduationCap className="mr-1" size={40} />
+            Built for Students
           </Badge>
 
           <h1 className="mb-8 text-5xl leading-tight font-bold text-gray-900 md:text-7xl">
@@ -133,17 +129,11 @@ export default function LandingPage() {
           <div className="mb-16 flex flex-col justify-center gap-4 sm:flex-row">
             <Button
               size="lg"
-              className="bg-indigo-600 px-8 py-4 text-lg hover:bg-indigo-700"
+              className="cursor-pointer bg-indigo-500 px-8 py-4 text-lg hover:bg-indigo-700"
               asChild
             >
-              <Link href="/dashboard">
-                Start Learning Smarter
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
+              <SignUpButton />
             </Button>
-            {/* <Button size="lg" variant="outline" className="px-8 py-4 text-lg">
-              Watch 2-min Demo
-            </Button> */}
           </div>
 
           {/* Social Proof */}

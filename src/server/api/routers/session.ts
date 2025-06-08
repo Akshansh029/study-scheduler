@@ -58,4 +58,31 @@ export const sessionRouter = createTRPCRouter({
 
     return sessions;
   }),
+
+  updateStatus: protectedProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        updatedStatus: z.enum([
+          "upcoming",
+          "in-progress",
+          "completed",
+          "overdue",
+          "due-now",
+        ]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const session = await ctx.db.studySession.findUnique({
+        where: { id: input.sessionId },
+      });
+
+      if (!session) {
+        throw new Error("Session not found");
+      }
+      return await ctx.db.studySession.update({
+        where: { id: input.sessionId },
+        data: { status: input.updatedStatus },
+      });
+    }),
 });

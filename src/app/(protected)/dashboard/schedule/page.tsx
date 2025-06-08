@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -46,6 +45,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import useRefetch from "hooks/use-refetch";
+import FadeLoader from "react-spinners/FadeLoader";
 
 const localizer = momentLocalizer(moment);
 
@@ -87,7 +87,8 @@ export default function SchedulePage() {
   const refetch = useRefetch();
 
   const subjects = api.subject.getSubjects.useQuery().data;
-  const { data: rawSessions } = api.session.getAllSessions.useQuery();
+  const { data: rawSessions, isPending } =
+    api.session.getAllSessions.useQuery();
   const createMutation = api.session.createSession.useMutation({
     onSuccess: () => {
       toast.success("Session created");
@@ -134,12 +135,7 @@ export default function SchedulePage() {
   }));
 
   // Correct signature:
-  const eventPropGetter = (
-    event: CalEvent,
-    start: Date,
-    end: Date,
-    isSelected: boolean,
-  ) => ({
+  const eventPropGetter = (event: CalEvent) => ({
     style: {
       backgroundColor: event.resource.subject.color,
       borderRadius: 4,
@@ -391,67 +387,96 @@ export default function SchedulePage() {
       </div>
 
       {/* Calendar / Table */}
-      <div className="p-4">
-        <Tabs defaultValue="calendar" className="w-full">
-          <TabsList className="grid grid-cols-2">
-            <TabsTrigger value="calendar" className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4" /> Calendar
-            </TabsTrigger>
-            <TabsTrigger value="table" className="flex items-center gap-2">
-              <List className="h-4 w-4" /> Table
-            </TabsTrigger>
-          </TabsList>
+      {isPending ? (
+        <div className="px-auto flex h-64 items-center justify-center">
+          <FadeLoader className="h-15 w-15" color="#a5a7a9" />
+        </div>
+      ) : (
+        <div className="p-4">
+          <Tabs defaultValue="calendar" className="w-full">
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="calendar" className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" /> Calendar
+              </TabsTrigger>
+              <TabsTrigger value="table" className="flex items-center gap-2">
+                <List className="h-4 w-4" /> Table
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="calendar" className="mt-4 h-[600px]">
-            <BigCalendar
-              localizer={localizer}
-              events={calendarEvents}
-              startAccessor="start"
-              endAccessor="end"
-              defaultView={Views.WEEK}
-              views={[Views.MONTH, Views.WEEK, Views.DAY]}
-              eventPropGetter={eventPropGetter}
-              onSelectEvent={(e) => openEdit(e.resource)}
-              popup
-            />
-          </TabsContent>
+            <TabsContent value="calendar" className="mt-4 h-[600px]">
+              <BigCalendar
+                localizer={localizer}
+                events={calendarEvents}
+                startAccessor="start"
+                endAccessor="end"
+                defaultView={Views.WEEK}
+                views={[Views.MONTH, Views.WEEK, Views.DAY]}
+                eventPropGetter={eventPropGetter}
+                onSelectEvent={(e) => openEdit(e.resource)}
+                popup
+              />
+            </TabsContent>
 
-          <TabsContent value="table" className="mt-4 space-y-4">
-            {sessions.length === 0 ? (
-              <div className="py-12 text-center">
-                <p className="text-gray-500">No sessions scheduled</p>
-              </div>
-            ) : (
-              sessions.map((s) => (
-                <Card key={s.id} className="hover:shadow-md">
-                  <CardContent className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">{s.title}</h3>
-                      <p className="text-sm text-gray-600">{s.subject.title}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => openEdit(s)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleSave()}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+            <TabsContent value="table" className="mt-4 space-y-4">
+              {sessions.length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-gray-500">No sessions scheduled</p>
+                </div>
+              ) : (
+                sessions.map((s) => (
+                  <Card key={s.id} className="hover:shadow-md">
+                    <CardContent className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="h-4 w-4 rounded-full"
+                          style={{
+                            backgroundColor: s.subject.color,
+                          }}
+                        />
+                        <div>
+                          <h3 className="font-semibold text-gray-900">
+                            {s.title}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {s.subject.title}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {s.startTime.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}{" "}
+                            -{" "}
+                            {s.endTime.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openEdit(s)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleSave()}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      )}
     </div>
   );
 }

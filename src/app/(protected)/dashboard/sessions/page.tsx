@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import FadeLoader from "react-spinners/FadeLoader";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { api } from "@/trpc/react";
+import { toast } from "sonner";
 
 interface StudySession {
   id: string;
@@ -35,8 +37,15 @@ interface StudySession {
   };
   description?: string;
   recurrence?: string;
-  status: "upcoming" | "in-progress" | "completed" | "overdue" | "due-now";
+  status: SessionStatus;
 }
+
+type SessionStatus =
+  | "upcoming"
+  | "in-progress"
+  | "completed"
+  | "overdue"
+  | "due-now";
 
 interface Flashcard {
   id: string;
@@ -101,6 +110,7 @@ export default function StudySessionsPage() {
   const [reviewedCards, setReviewedCards] = useState(0);
 
   const { data, isPending } = api.session.getAllSessions.useQuery();
+  const updateStatusMutation = api.session.updateStatus.useMutation();
 
   useEffect(() => {
     if (data) {
@@ -119,6 +129,32 @@ export default function StudySessionsPage() {
     return () => clearInterval(interval);
   }, [isTimerRunning, activeSession]);
 
+  // Separate function to calculate status without side effects
+  const calculateStatus = useCallback((session: StudySession) => {
+    const now = new Date();
+    if (session.status === "completed") return "completed";
+    if (session.status === "in-progress") return "in-progress";
+    if (now >= session.startTime && now <= session.endTime) return "due-now";
+    if (now > session.endTime) return "overdue";
+    return "upcoming";
+  }, []);
+
+  // Function to handle status updates
+  const handleStatusUpdate = useCallback(
+    async (sessionId: string, status: string) => {
+      try {
+        await updateStatusMutation.mutateAsync({
+          sessionId,
+          updatedStatus: status as SessionStatus,
+        });
+      } catch (error) {
+        toast.error("Failed to update session status");
+        console.error("Error updating session status:", error);
+      }
+    },
+    [updateStatusMutation],
+  );
+
   const startSession = (session: StudySession) => {
     setActiveSession(session);
     setSessions(
@@ -126,6 +162,9 @@ export default function StudySessionsPage() {
         s.id === session.id ? { ...s, status: "in-progress" } : s,
       ),
     );
+
+    // Update status in database
+    void handleStatusUpdate(session.id, "in-progress");
 
     // Load flashcards for this subject
     const subjectCards = mockFlashcards.filter(
@@ -155,6 +194,8 @@ export default function StudySessionsPage() {
           s.id === activeSession.id ? { ...s, status: "completed" } : s,
         ),
       );
+      // Update status in database
+      void handleStatusUpdate(activeSession.id, "completed");
     }
     setActiveSession(null);
     setIsTimerRunning(false);
@@ -192,15 +233,6 @@ export default function StudySessionsPage() {
       return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
     return `${minutes}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const getSessionStatus = (session: StudySession) => {
-    const now = new Date();
-    if (session.status === "completed") return "completed";
-    if (session.status === "in-progress") return "in-progress";
-    if (now >= session.startTime && now <= session.endTime) return "due-now";
-    if (now > session.endTime) return "overdue";
-    return "upcoming";
   };
 
   const getStatusBadge = (status: string) => {
@@ -331,74 +363,80 @@ export default function StudySessionsPage() {
             </div>
 
             {/* Session List */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Scheduled Sessions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {sessions.map((session) => {
-                    const status = getSessionStatus(session);
-                    return (
-                      <Card
-                        key={session.id}
-                        className="transition-shadow hover:shadow-md"
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div
-                                className="h-4 w-4 rounded-full"
-                                style={{
-                                  backgroundColor: session.subject.color,
-                                }}
-                              />
-                              <div>
-                                <h3 className="font-semibold text-gray-900">
-                                  {session.title}
-                                </h3>
-                                <p className="text-sm text-gray-600">
-                                  {session.subject.title}
-                                </p>
-                                <p className="mt-1 text-xs text-gray-500">
-                                  {session.startTime.toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}{" "}
-                                  -{" "}
-                                  {session.endTime.toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
-                                </p>
+            {isPending ? (
+              <div className="px-auto flex h-64 items-center justify-center">
+                <FadeLoader className="h-15 w-15" color="#a5a7a9" />
+              </div>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Scheduled Sessions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {sessions.map((session) => {
+                      const status = calculateStatus(session);
+                      return (
+                        <Card
+                          key={session.id}
+                          className="transition-shadow hover:shadow-md"
+                        >
+                          <CardContent className="px-6 py-0">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div
+                                  className="h-4 w-4 rounded-full"
+                                  style={{
+                                    backgroundColor: session.subject.color,
+                                  }}
+                                />
+                                <div>
+                                  <h3 className="font-semibold text-gray-900">
+                                    {session.title}
+                                  </h3>
+                                  <p className="text-sm text-gray-600">
+                                    {session.subject.title}
+                                  </p>
+                                  <p className="mt-1 text-xs text-gray-500">
+                                    {session.startTime.toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}{" "}
+                                    -{" "}
+                                    {session.endTime.toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                {getStatusBadge(status)}
+                                <Button
+                                  onClick={() => startSession(session)}
+                                  disabled={session.status === "completed"}
+                                  className="bg-indigo-600 hover:bg-indigo-700"
+                                >
+                                  <Play className="mr-2 h-4 w-4" />
+                                  Start Session
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                              {getStatusBadge(status)}
-                              <Button
-                                onClick={() => startSession(session)}
-                                disabled={status === "completed"}
-                                className="bg-indigo-600 hover:bg-indigo-700"
-                              >
-                                <Play className="mr-2 h-4 w-4" />
-                                Start Session
-                              </Button>
-                            </div>
-                          </div>
-                          {session.description && (
-                            <div className="mt-3 border-t border-gray-100 pt-3">
-                              <p className="text-sm text-gray-600">
-                                {session.description}
-                              </p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                            {session.description && (
+                              <div className="mt-3 border-t border-gray-100 pt-3">
+                                <p className="text-sm text-gray-600">
+                                  {session.description}
+                                </p>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </>
         ) : (
           /* Active Session */
@@ -462,14 +500,14 @@ export default function StudySessionsPage() {
                       </Badge> */}
                     </div>
 
-                    <div className="space-y-8">
+                    {/* <div className="space-y-8">
                       <div>
                         <h3 className="mb-4 text-lg font-medium text-gray-900">
                           Question:
                         </h3>
-                        {/* <p className="text-xl leading-relaxed text-gray-800">
+                        <p className="text-xl leading-relaxed text-gray-800">
                           {currentFlashcards[currentCardIndex].question}
-                        </p> */}
+                        </p>
                       </div>
 
                       {showAnswer && (
@@ -477,12 +515,12 @@ export default function StudySessionsPage() {
                           <h3 className="mb-4 text-lg font-medium text-gray-900">
                             Answer:
                           </h3>
-                          {/* <p className="text-lg leading-relaxed text-gray-700">
+                          <p className="text-lg leading-relaxed text-gray-700">
                             {currentFlashcards[currentCardIndex].answer}
-                          </p> */}
+                          </p>
                         </div>
                       )}
-                    </div>
+                    </div> */}
 
                     <div className="pt-8">
                       {!showAnswer ? (

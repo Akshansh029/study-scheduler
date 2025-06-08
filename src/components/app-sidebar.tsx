@@ -1,5 +1,4 @@
 "use client";
-import { toast } from "sonner";
 import { UserButton, useUser } from "@clerk/nextjs";
 import {
   Calendar,
@@ -28,11 +27,6 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import {
-  LogoutLink,
-  useKindeBrowserClient,
-} from "@kinde-oss/kinde-auth-nextjs";
-import Image from "next/image";
 
 // Menu items for main navigation
 const mainItems = [
@@ -97,11 +91,11 @@ const settingsItems = [
 ];
 
 export function AppSidebar() {
-  const { isSignedIn, user, isLoaded } = useUser();
+  const { user } = useUser();
 
   return (
-    <Sidebar variant="inset">
-      <SidebarHeader className="border-sidebar-border border-b">
+    <Sidebar variant="inset" className="bg-white">
+      <SidebarHeader className="border-sidebar-border border-b bg-white">
         <div className="flex items-center gap-2 px-2 py-2">
           <div className="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-purple-600">
             <Brain className="size-4" />
@@ -115,7 +109,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-x-hidden">
+      <SidebarContent className="overflow-x-hidden bg-white">
         {/* Main Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
@@ -162,7 +156,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-sidebar-border border-t">
+      <SidebarFooter className="border-sidebar-border border-t bg-white">
         <SidebarMenu>
           {settingsItems.map((item) => (
             <SidebarMenuItem key={item.title}>

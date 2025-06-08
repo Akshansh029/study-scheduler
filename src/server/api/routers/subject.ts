@@ -28,6 +28,43 @@ export const subjectRouter = createTRPCRouter({
       where: {
         userId: ctx.user.userId!,
       },
+      orderBy: { createdAt: "desc" },
     });
   }),
+
+  updateSubject: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        color: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.subject.update({
+        where: {
+          id: input.id,
+          userId: ctx.user.userId!,
+        },
+        data: {
+          title: input.title,
+          color: input.color,
+        },
+      });
+    }),
+
+  deleteSubject: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.subject.delete({
+        where: {
+          id: input.id,
+          userId: ctx.user.userId!,
+        },
+      });
+    }),
 });

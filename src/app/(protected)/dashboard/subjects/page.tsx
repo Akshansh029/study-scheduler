@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 "use client";
 
+import { format } from "date-fns";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ export default function SubjectsPage() {
 
   // Subject retrieval and creation
   const { data: subjects, isPending } = api.subject.getSubjects.useQuery();
+
   const createSubject = api.subject.createSubject.useMutation({
     onSuccess: () => {
       toast.success("Subject created successfully");
@@ -92,6 +94,38 @@ export default function SubjectsPage() {
       toast.error(err.message);
     },
   });
+
+  const updateSubject = api.subject.updateSubject.useMutation({
+    onSuccess: () => {
+      toast.success("Subject updated");
+      void refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteSubject = api.subject.deleteSubject.useMutation({
+    onSuccess: () => {
+      toast.success("Subject deleted");
+      void refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleEditSubject = (subject: Subject) => {
+    const newTitle = prompt("Enter new subject title", subject.title);
+    if (!newTitle) return;
+    updateSubject.mutate({
+      id: subject.id,
+      title: newTitle,
+      color: subject.color,
+    });
+  };
+
+  const handleDeleteSubject = (id: string) => {
+    if (confirm("Are you sure you want to delete this subject?")) {
+      deleteSubject.mutate({ id });
+    }
+  };
 
   const onSubmit = (data: FormInput) => {
     setLoading(true);
@@ -306,13 +340,13 @@ export default function SubjectsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                          // onClick={() => handleEditSubject(subject)}
+                            onClick={() => handleEditSubject(subject)}
                           >
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            // onClick={() => handleDeleteSubject(subject.id)}
+                            onClick={() => handleDeleteSubject(subject.id)}
                             className="text-red-600"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -333,7 +367,7 @@ export default function SubjectsPage() {
                       <div>
                         <div className="text-gray-600">Created</div>
                         <div className="font-semibold">
-                          {subject.createdAt.getUTCDate()}
+                          {format(subject.createdAt, "PPP")}
                         </div>
                       </div>
                     </div>

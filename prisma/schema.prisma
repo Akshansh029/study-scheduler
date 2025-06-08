@@ -44,14 +44,14 @@ model Subject {
 
 // Scheduled study sessions (time slots)
 model StudySession {
-    id         String   @id @default(cuid())
-    createdAt  DateTime @default(now())
-    updatedAt  DateTime @updatedAt
-    title      String
-    subtopic   String
-    startTime  DateTime
-    endTime    DateTime
-    recurrence String? // e.g. "weekly", "daily", or CRON expression
+    id          String   @id @default(cuid())
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    title       String
+    startTime   DateTime
+    endTime     DateTime
+    recurrence  String? // e.g. "weekly", "daily", "monthly"
+    description String?
 
     user      User     @relation(fields: [userId], references: [id])
     userId    String

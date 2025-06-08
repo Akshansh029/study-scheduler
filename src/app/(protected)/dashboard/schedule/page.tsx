@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,24 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
+  DialogTrigger,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectContent,
+  SelectItem,
 } from "@/components/ui/select";
 import {
   Plus,
@@ -41,10 +39,15 @@ import {
   Calendar as BigCalendar,
   momentLocalizer,
   Views,
-  type EventProps,
 } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+
+import { api } from "@/trpc/react";
+import { toast } from "sonner";
+import useRefetch from "hooks/use-refetch";
+
+const localizer = momentLocalizer(moment);
 
 interface StudySession {
   id: string;
@@ -52,90 +55,27 @@ interface StudySession {
   startTime: Date;
   endTime: Date;
   subjectId: string;
-  subjectTitle: string;
-  subjectColor: string;
-  recurrence?: "none" | "daily" | "weekly" | "monthly";
-  description?: string;
+  subject: { id: string; title: string; color: string };
+  recurrence?: string | null;
+  description?: string | null;
   status: "scheduled" | "in-progress" | "completed";
 }
 
 type RecType = "none" | "daily" | "weekly" | "monthly";
 
-interface Subject {
-  id: string;
+interface FormState {
   title: string;
-  color: string;
+  subjectId: string;
+  startTime: string;
+  endTime: string;
+  recurrence: RecType;
+  description: string;
 }
 
-type CalendarEvent = {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  resource: StudySession;
-};
-
-const subjects: Subject[] = [
-  { id: "1", title: "Physics", color: "#2563EB" },
-  { id: "2", title: "Mathematics", color: "#059669" },
-  { id: "3", title: "Chemistry", color: "#7C3AED" },
-  { id: "4", title: "Biology", color: "#DC2626" },
-];
-
-const localizer = momentLocalizer(moment);
-
 export default function SchedulePage() {
-  const [sessions, setSessions] = useState<StudySession[]>([
-    {
-      id: "1",
-      title: "Quantum Mechanics Review",
-      startTime: new Date(2024, 11, 8, 9, 0),
-      endTime: new Date(2024, 11, 8, 10, 30),
-      subjectId: "1",
-      subjectTitle: "Physics",
-      subjectColor: "#2563EB",
-      recurrence: "weekly",
-      description: "Review quantum mechanics concepts and practice problems",
-      status: "scheduled",
-    },
-    {
-      id: "2",
-      title: "Calculus Practice",
-      startTime: new Date(2024, 11, 8, 14, 0),
-      endTime: new Date(2024, 11, 8, 15, 30),
-      subjectId: "2",
-      subjectTitle: "Mathematics",
-      subjectColor: "#059669",
-      recurrence: "daily",
-      description: "Practice integration and differentiation problems",
-      status: "scheduled",
-    },
-    {
-      id: "3",
-      title: "Organic Chemistry",
-      startTime: new Date(2024, 11, 9, 16, 30),
-      endTime: new Date(2024, 11, 9, 18, 0),
-      subjectId: "3",
-      subjectTitle: "Chemistry",
-      subjectColor: "#7C3AED",
-      recurrence: "none",
-      description: "Study reaction mechanisms and synthesis pathways",
-      status: "scheduled",
-    },
-  ]);
-
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingSession, setEditingSession] = useState<StudySession | null>(
-    null,
-  );
-  const [form, setForm] = useState<{
-    title: string;
-    subjectId: string;
-    startTime: string;
-    endTime: string;
-    recurrence: StudySession["recurrence"];
-    description: string;
-  }>({
+  const [editing, setEditing] = useState<StudySession | null>(null);
+  const [form, setForm] = useState<FormState>({
     title: "",
     subjectId: "",
     startTime: "",
@@ -144,17 +84,48 @@ export default function SchedulePage() {
     description: "",
   });
 
-  // Sync window resize for calendar render
+  const refetch = useRefetch();
+
+  const subjects = api.subject.getSubjects.useQuery().data;
+  const { data: rawSessions } = api.session.getAllSessions.useQuery();
+  const createMutation = api.session.createSession.useMutation({
+    onSuccess: () => {
+      toast.success("Session created");
+      void refetch();
+      closeDialog();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   useEffect(() => {
-    const timer = setTimeout(
-      () => window.dispatchEvent(new Event("resize")),
-      100,
-    );
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => window.dispatchEvent(new Event("resize")), 100);
+    return () => clearTimeout(t);
   }, []);
 
-  // Prepare events for BigCalendar
-  const calendarEvents = sessions.map((s) => ({
+  // Safely default to empty array:
+  const sessions: StudySession[] = (rawSessions ?? [])
+    .filter((s) => s.subjectId && s.subject)
+    .map((s) => ({
+      id: s.id,
+      title: s.title,
+      startTime: new Date(s.startTime as Date),
+      endTime: new Date(s.endTime as Date),
+      subjectId: s.subjectId as string,
+      subject: s.subject as { id: string; title: string; color: string },
+      recurrence: s.recurrence,
+      description: s.description,
+      status: "scheduled",
+    }));
+
+  // Prepare for calendar
+  type CalEvent = {
+    id: string;
+    title: string;
+    start: Date;
+    end: Date;
+    resource: StudySession;
+  };
+  const calendarEvents: CalEvent[] = sessions.map((s) => ({
     id: s.id,
     title: s.title,
     start: s.startTime,
@@ -162,15 +133,15 @@ export default function SchedulePage() {
     resource: s,
   }));
 
-  // Style each event based on its subject color
+  // Correct signature:
   const eventPropGetter = (
-    event: CalendarEvent,
+    event: CalEvent,
     start: Date,
     end: Date,
     isSelected: boolean,
   ) => ({
     style: {
-      backgroundColor: event.resource.subjectColor,
+      backgroundColor: event.resource.subject.color,
       borderRadius: 4,
       color: "white",
       border: 0,
@@ -178,7 +149,7 @@ export default function SchedulePage() {
   });
 
   function openCreate() {
-    setEditingSession(null);
+    setEditing(null);
     setForm({
       title: "",
       subjectId: "",
@@ -190,93 +161,71 @@ export default function SchedulePage() {
     setIsDialogOpen(true);
   }
 
-  function openEdit(session: StudySession) {
-    setEditingSession(session);
+  function openEdit(sess: StudySession) {
+    setEditing(sess);
     setForm({
-      title: session.title,
-      subjectId: session.subjectId,
-      startTime: moment(session.startTime).format("YYYY-MM-DDTHH:mm"),
-      endTime: moment(session.endTime).format("YYYY-MM-DDTHH:mm"),
-      recurrence: session.recurrence ?? "none",
-      description: session.description ?? "",
+      title: sess.title,
+      subjectId: sess.subjectId,
+      startTime: moment(sess.startTime).format("YYYY-MM-DDTHH:mm"),
+      endTime: moment(sess.endTime).format("YYYY-MM-DDTHH:mm"),
+      recurrence: (sess.recurrence as RecType) ?? "none",
+      description: sess.description ?? "",
     });
     setIsDialogOpen(true);
   }
 
-  function resetForm() {
+  function closeDialog() {
     setIsDialogOpen(false);
-    setEditingSession(null);
-    setForm({
-      title: "",
-      subjectId: "",
-      startTime: "",
-      endTime: "",
-      recurrence: "none",
-      description: "",
-    });
+    setEditing(null);
   }
 
   function handleSave() {
-    if (!form.title || !form.subjectId || !form.startTime || !form.endTime)
-      return;
+    if (!form.title || !form.subjectId || !form.startTime || !form.endTime) {
+      return toast.error("All fields required");
+    }
 
-    const subject = subjects.find((s) => s.id === form.subjectId)!;
-    const newSession: StudySession = {
-      id: editingSession ? editingSession.id : Date.now().toString(),
+    const start = new Date(form.startTime);
+    const end = new Date(form.endTime);
+    if (start >= end) {
+      return toast.error("End must be after start");
+    }
+
+    if (editing) {
+      // TODO: implement updateSession mutation
+      return toast.error("Update not yet implemented");
+    }
+
+    // create
+    createMutation.mutate({
       title: form.title,
+      startTime: start,
+      endTime: end,
       subjectId: form.subjectId,
-      subjectTitle: subject.title,
-      subjectColor: subject.color,
-      startTime: new Date(form.startTime),
-      endTime: new Date(form.endTime),
-      recurrence: form.recurrence,
-      description: form.description,
-      status: editingSession?.status ?? "scheduled",
-    };
-
-    setSessions((prev) =>
-      editingSession
-        ? prev.map((s) => (s.id === editingSession.id ? newSession : s))
-        : [...prev, newSession],
-    );
-
-    resetForm();
+      recurrence: form.recurrence === "none" ? undefined : form.recurrence,
+      description: form.description || undefined,
+    });
   }
 
-  function handleDelete(id: string) {
-    if (!confirm("Delete this session?")) return;
-    setSessions((prev) => prev.filter((s) => s.id !== id));
-  }
+  const todayCount = sessions.filter((s) =>
+    moment(s.startTime).isSame(new Date(), "day"),
+  ).length;
 
-  const getStatusBadge = (status: StudySession["status"]) => {
-    if (status === "in-progress")
-      return <Badge className="bg-orange-500">In Progress</Badge>;
-    if (status === "completed")
-      return <Badge className="bg-green-500">Completed</Badge>;
-    return <Badge variant="secondary">Scheduled</Badge>;
-  };
-
-  const getRecurrenceBadge = (rec: StudySession["recurrence"]) =>
-    rec && rec !== "none" ? (
-      <Badge variant="outline" className="text-xs">
-        {rec}
-      </Badge>
-    ) : null;
+  const weekCount = sessions.filter((s) =>
+    moment(s.startTime).isSame(new Date(), "week"),
+  ).length;
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header + Dialog */}
-      <header className="flex items-center justify-between border-b bg-white px-6 py-4">
+      <header className="flex items-center justify-between border-b bg-white p-4">
         <div className="flex items-center gap-4">
           <SidebarTrigger />
           <div>
             <h1 className="text-2xl font-bold">Schedule</h1>
-            <p className="text-gray-600">
-              Manage your study sessions and time blocks
-            </p>
+            <p className="text-gray-600">Manage your study sessions</p>
           </div>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(o) => !o && resetForm()}>
+        <Dialog open={isDialogOpen} onOpenChange={(o) => !o && closeDialog()}>
           <DialogTrigger asChild>
             <Button onClick={openCreate}>
               <Plus className="mr-2 h-4 w-4" /> New Session
@@ -285,34 +234,37 @@ export default function SchedulePage() {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>
-                {editingSession ? "Edit Session" : "Create New Session"}
+                {editing ? "Edit Session" : "Create New Session"}
               </DialogTitle>
               <DialogDescription>
-                {editingSession
-                  ? "Update your study session details."
-                  : "Schedule a new study session."}
+                {editing
+                  ? "Update details below."
+                  : "Fill out to schedule a session."}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="title">Title</Label>
+                <Label>Title</Label>
                 <Input
-                  id="title"
                   value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, title: e.target.value }))
+                  }
                 />
               </div>
               <div className="grid gap-2">
                 <Label>Subject</Label>
                 <Select
                   value={form.subjectId}
-                  onValueChange={(v) => setForm({ ...form, subjectId: v })}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, subjectId: v }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Choose subject" />
                   </SelectTrigger>
                   <SelectContent>
-                    {subjects.map((s) => (
+                    {subjects?.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         <div className="flex items-center gap-2">
                           <div
@@ -328,24 +280,22 @@ export default function SchedulePage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="startTime">Start</Label>
+                  <Label>Start</Label>
                   <Input
-                    id="startTime"
                     type="datetime-local"
                     value={form.startTime}
                     onChange={(e) =>
-                      setForm({ ...form, startTime: e.target.value })
+                      setForm((f) => ({ ...f, startTime: e.target.value }))
                     }
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="endTime">End</Label>
+                  <Label>End</Label>
                   <Input
-                    id="endTime"
                     type="datetime-local"
                     value={form.endTime}
                     onChange={(e) =>
-                      setForm({ ...form, endTime: e.target.value })
+                      setForm((f) => ({ ...f, endTime: e.target.value }))
                     }
                   />
                 </div>
@@ -355,7 +305,7 @@ export default function SchedulePage() {
                 <Select
                   value={form.recurrence}
                   onValueChange={(v) =>
-                    setForm({ ...form, recurrence: v as RecType })
+                    setForm((f) => ({ ...f, recurrence: v as RecType }))
                   }
                 >
                   <SelectTrigger>
@@ -375,17 +325,24 @@ export default function SchedulePage() {
                   rows={3}
                   value={form.description}
                   onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
+                    setForm((f) => ({ ...f, description: e.target.value }))
                   }
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={resetForm}>
+              <Button variant="outline" onClick={closeDialog}>
                 Cancel
               </Button>
-              <Button onClick={handleSave}>
-                {editingSession ? "Update" : "Create"}
+              <Button
+                onClick={handleSave}
+                disabled={createMutation.status === "pending"}
+              >
+                {createMutation.status === "pending"
+                  ? "Saving..."
+                  : editing
+                    ? "Update"
+                    : "Create"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -393,20 +350,14 @@ export default function SchedulePage() {
       </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 p-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex justify-between pb-2">
-            <CardTitle>Today&apos;s Sessions</CardTitle>
+            <CardTitle>Today&apos;s</CardTitle>
             <CalendarIcon className="h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {
-                sessions.filter((s) =>
-                  moment(s.startTime).isSame(new Date(), "day"),
-                ).length
-              }
-            </div>
+            <div className="text-2xl font-bold">{todayCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -415,14 +366,7 @@ export default function SchedulePage() {
             <CalendarDays className="h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {/* compute weekly count */}
-              {
-                sessions.filter((s) =>
-                  moment(s.startTime).isSame(new Date(), "week"),
-                ).length
-              }
-            </div>
+            <div className="text-2xl font-bold">{weekCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -431,42 +375,82 @@ export default function SchedulePage() {
             <Clock className="h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">—</div>
+            {/* You can compute hours here */}
+            <div className="text-2xl font-bold">—h</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex justify-between pb-2">
-            <CardTitle>Completion Rate</CardTitle>
+            <CardTitle>Completion</CardTitle>
             <Play className="h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">—</div>
+            <div className="text-2xl font-bold">—%</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Calendar / Table */}
-      <div className="p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Study Sessions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[600px]">
-              <BigCalendar
-                localizer={localizer}
-                events={calendarEvents}
-                startAccessor="start"
-                endAccessor="end"
-                views={[Views.MONTH, Views.WEEK, Views.DAY]}
-                defaultView={Views.WEEK}
-                eventPropGetter={eventPropGetter}
-                onSelectEvent={(e) => openEdit(e.resource as StudySession)}
-                popup
-              />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="p-4">
+        <Tabs defaultValue="calendar" className="w-full">
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" /> Calendar
+            </TabsTrigger>
+            <TabsTrigger value="table" className="flex items-center gap-2">
+              <List className="h-4 w-4" /> Table
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="calendar" className="mt-4 h-[600px]">
+            <BigCalendar
+              localizer={localizer}
+              events={calendarEvents}
+              startAccessor="start"
+              endAccessor="end"
+              defaultView={Views.WEEK}
+              views={[Views.MONTH, Views.WEEK, Views.DAY]}
+              eventPropGetter={eventPropGetter}
+              onSelectEvent={(e) => openEdit(e.resource)}
+              popup
+            />
+          </TabsContent>
+
+          <TabsContent value="table" className="mt-4 space-y-4">
+            {sessions.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-gray-500">No sessions scheduled</p>
+              </div>
+            ) : (
+              sessions.map((s) => (
+                <Card key={s.id} className="hover:shadow-md">
+                  <CardContent className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold">{s.title}</h3>
+                      <p className="text-sm text-gray-600">{s.subject.title}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => openEdit(s)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleSave()}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

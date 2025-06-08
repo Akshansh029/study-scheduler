@@ -49,6 +49,12 @@ const mainItems = [
     badge: null,
   },
   {
+    title: "Sessions",
+    url: "/dashboard/sessions",
+    icon: Clock,
+    badge: null,
+  },
+  {
     title: "Review",
     url: "/dashboard/review",
     icon: Brain,

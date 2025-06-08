@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 "use client";
 
 import { format } from "date-fns";
@@ -8,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Dialog,
@@ -131,6 +128,11 @@ export default function SubjectsPage() {
     setLoading(true);
     if (!clerkUser.user?.id) {
       toast.error("User not found");
+      return;
+    }
+
+    if (data.title === "") {
+      toast.error("Please enter the subject");
       return;
     }
 

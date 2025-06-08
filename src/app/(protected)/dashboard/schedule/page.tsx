@@ -58,7 +58,7 @@ interface StudySession {
   subject: { id: string; title: string; color: string };
   recurrence?: string | null;
   description?: string | null;
-  status: "scheduled" | "in-progress" | "completed";
+  status: "upcoming" | "in-progress" | "completed" | "due-now" | "overdue";
 }
 
 type RecType = "none" | "daily" | "weekly" | "monthly";
@@ -104,17 +104,17 @@ export default function SchedulePage() {
 
   // Safely default to empty array:
   const sessions: StudySession[] = (rawSessions ?? [])
-    .filter((s) => s.subjectId && s.subject)
+    .filter((s) => typeof s.subjectId === "string" && s.subjectId && s.subject)
     .map((s) => ({
       id: s.id,
       title: s.title,
-      startTime: new Date(s.startTime as Date),
-      endTime: new Date(s.endTime as Date),
-      subjectId: s.subjectId as string,
+      startTime: new Date(s.startTime),
+      endTime: new Date(s.endTime),
+      subjectId: s.subjectId!,
       subject: s.subject as { id: string; title: string; color: string },
       recurrence: s.recurrence,
       description: s.description,
-      status: "scheduled",
+      status: "upcoming",
     }));
 
   // Prepare for calendar

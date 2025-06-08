@@ -20,6 +20,7 @@ import {
   BookOpen,
   ArrowRight,
 } from "lucide-react";
+import { api } from "@/trpc/react";
 
 interface StudySession {
   id: string;
@@ -27,10 +28,14 @@ interface StudySession {
   startTime: Date;
   endTime: Date;
   subjectId: string;
-  subjectTitle: string;
-  subjectColor: string;
-  status: "scheduled" | "in-progress" | "completed";
+  subject: {
+    id: string;
+    title: string;
+    color: string;
+  };
   description?: string;
+  recurrence?: string;
+  status: "upcoming" | "in-progress" | "completed" | "overdue" | "due-now";
 }
 
 interface Flashcard {
@@ -44,31 +49,6 @@ interface Flashcard {
   repetitionCount: number;
   easeFactor: number;
 }
-
-const mockSessions: StudySession[] = [
-  {
-    id: "1",
-    title: "Quantum Mechanics Review",
-    startTime: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-    endTime: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
-    subjectId: "1",
-    subjectTitle: "Physics",
-    subjectColor: "#2563EB",
-    status: "scheduled",
-    description: "Review quantum mechanics concepts and practice problems",
-  },
-  {
-    id: "2",
-    title: "Calculus Practice",
-    startTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-    endTime: new Date(Date.now() + 3.5 * 60 * 60 * 1000), // 3.5 hours from now
-    subjectId: "2",
-    subjectTitle: "Mathematics",
-    subjectColor: "#059669",
-    status: "scheduled",
-    description: "Practice integration and differentiation problems",
-  },
-];
 
 const mockFlashcards: Flashcard[] = [
   {
@@ -110,7 +90,7 @@ const mockFlashcards: Flashcard[] = [
 ];
 
 export default function StudySessionsPage() {
-  const [sessions, setSessions] = useState<StudySession[]>(mockSessions);
+  const [sessions, setSessions] = useState<StudySession[]>([]);
   const [activeSession, setActiveSession] = useState<StudySession | null>(null);
   const [sessionTimer, setSessionTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -119,6 +99,14 @@ export default function StudySessionsPage() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [sessionProgress, setSessionProgress] = useState(0);
   const [reviewedCards, setReviewedCards] = useState(0);
+
+  const { data, isPending } = api.session.getAllSessions.useQuery();
+
+  useEffect(() => {
+    if (data) {
+      setSessions(data as StudySession[]);
+    }
+  }, [data]);
 
   // Timer effect
   useEffect(() => {
@@ -134,7 +122,7 @@ export default function StudySessionsPage() {
   const startSession = (session: StudySession) => {
     setActiveSession(session);
     setSessions(
-      sessions.map((s) =>
+      sessions?.map((s) =>
         s.id === session.id ? { ...s, status: "in-progress" } : s,
       ),
     );
@@ -179,7 +167,7 @@ export default function StudySessionsPage() {
   };
 
   const handleCardRating = (rating: "easy" | "good" | "hard") => {
-    if (currentFlashcards.length === 0) return;
+    if (currentFlashcards?.length === 0) return;
 
     // Update progress
     const newReviewedCards = reviewedCards + 1;
@@ -362,7 +350,7 @@ export default function StudySessionsPage() {
                               <div
                                 className="h-4 w-4 rounded-full"
                                 style={{
-                                  backgroundColor: session.subjectColor,
+                                  backgroundColor: session.subject.color,
                                 }}
                               />
                               <div>
@@ -370,7 +358,7 @@ export default function StudySessionsPage() {
                                   {session.title}
                                 </h3>
                                 <p className="text-sm text-gray-600">
-                                  {session.subjectTitle}
+                                  {session.subject.title}
                                 </p>
                                 <p className="mt-1 text-xs text-gray-500">
                                   {session.startTime.toLocaleTimeString([], {
@@ -413,23 +401,22 @@ export default function StudySessionsPage() {
             </Card>
           </>
         ) : (
-          /* Active Session Interface */
+          /* Active Session */
           <div className="mx-auto max-w-4xl space-y-6">
-            {/* Session Header */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div
                       className="h-6 w-6 rounded-full"
-                      style={{ backgroundColor: activeSession.subjectColor }}
+                      style={{ backgroundColor: activeSession.subject.color }}
                     />
                     <div>
                       <CardTitle className="text-xl">
                         {activeSession.title}
                       </CardTitle>
                       <p className="text-gray-600">
-                        {activeSession.subjectTitle}
+                        {activeSession.subject.title}
                       </p>
                     </div>
                   </div>

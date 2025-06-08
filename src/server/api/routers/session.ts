@@ -44,6 +44,7 @@ export const sessionRouter = createTRPCRouter({
         recurrence: true,
         subjectId: true,
         description: true,
+        status: true,
         subject: {
           select: {
             id: true,

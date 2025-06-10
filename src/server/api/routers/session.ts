@@ -1,6 +1,7 @@
 import { startOfDay, endOfDay } from "date-fns";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import moment from "moment";
 
 export const sessionRouter = createTRPCRouter({
   createSession: protectedProcedure
@@ -128,11 +129,13 @@ export const sessionRouter = createTRPCRouter({
   studyTime: protectedProcedure.query(async ({ ctx }) => {
     const todayStart = startOfDay(new Date());
     const todayEnd = endOfDay(new Date());
+    const weekStart = moment().startOf("week").toDate();
+    const weekEnd = moment().endOf("week").toDate();
 
+    // Sessions for today
     const sessions = await ctx.db.studySession.findMany({
       where: {
         userId: ctx.user.userId!,
-        status: "completed",
         startTime: {
           gte: todayStart,
           lte: todayEnd,
@@ -144,24 +147,75 @@ export const sessionRouter = createTRPCRouter({
       },
     });
 
-    // Calculate total study time in milliseconds
-    const totalStudyTimeMs = sessions.reduce((acc, session) => {
+    const weekSessions = await ctx.db.studySession.findMany({
+      where: {
+        userId: ctx.user.userId!,
+        startTime: {
+          gte: weekStart,
+          lte: weekEnd,
+        },
+      },
+      select: {
+        startTime: true,
+        endTime: true,
+      },
+    });
+
+    const completedSessions = await ctx.db.studySession.count({
+      where: {
+        userId: ctx.user.userId!,
+        status: "completed",
+        startTime: {
+          gte: todayStart,
+          lte: todayEnd,
+        },
+      },
+    });
+
+    const todayCount = sessions.filter((s) =>
+      moment(s.startTime).isSame(new Date(), "day"),
+    ).length;
+
+    const weekCount = weekSessions.filter((s) =>
+      moment(s.startTime).isSame(new Date(), "week"),
+    ).length;
+
+    const completedSessionsPercentage = Math.floor(
+      (completedSessions / todayCount) * 100 || 0,
+    );
+
+    // total time in milliseconds for today
+    const totalStudyTimeMsToday = sessions.reduce((acc, session) => {
       if (session.startTime && session.endTime) {
         return acc + (session.endTime.getTime() - session.startTime.getTime());
       }
       return acc;
     }, 0);
 
-    const totalMinutes = Math.floor(totalStudyTimeMs / (1000 * 60));
+    // total time in milliseconds for the week
+    const totalStudyTimeMsWeek = weekSessions.reduce((acc, session) => {
+      if (session.startTime && session.endTime) {
+        return acc + (session.endTime.getTime() - session.startTime.getTime());
+      }
+      return acc;
+    }, 0);
+
+    const totalMinutes = Math.floor(totalStudyTimeMsToday / (1000 * 60));
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
 
+    const totalMinutesWeek = Math.floor(totalStudyTimeMsWeek / (1000 * 60));
+    const weekHrs = Math.floor(totalMinutesWeek / 60);
+    const weekMins = totalMinutesWeek % 60;
+
     return {
-      totalStudyTimeMs,
-      totalStudyTime: {
-        hours,
-        minutes,
-      },
+      hours,
+      minutes,
+      weekHrs,
+      weekMins,
+      todayCount,
+      weekCount,
+      completedSessionsPercentage,
     };
   }),
 });

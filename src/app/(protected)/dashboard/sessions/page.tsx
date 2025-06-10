@@ -11,18 +11,16 @@ import {
   Play,
   Pause,
   Square,
-  Clock,
-  Brain,
   CheckCircle,
   XCircle,
   RotateCcw,
-  Timer,
-  Target,
   BookOpen,
   ArrowRight,
 } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
+import SessionHeader from "@/components/session-header";
+import moment from "moment";
 
 interface StudySession {
   id: string;
@@ -302,65 +300,7 @@ export default function StudySessionsPage() {
         {!activeSession ? (
           <>
             {/* Stats Overview */}
-            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Today&apos;s Sessions
-                  </CardTitle>
-                  <Clock className="text-muted-foreground h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{sessions.length}</div>
-                  <p className="text-muted-foreground text-xs">
-                    Scheduled for today
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Study Time
-                  </CardTitle>
-                  <Timer className="text-muted-foreground h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">2.5h</div>
-                  <p className="text-muted-foreground text-xs">
-                    Planned for today
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Cards Due
-                  </CardTitle>
-                  <Brain className="text-muted-foreground h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">42</div>
-                  <p className="text-muted-foreground text-xs">
-                    Ready for review
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Completion Rate
-                  </CardTitle>
-                  <Target className="text-muted-foreground h-4 w-4" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">87%</div>
-                  <p className="text-muted-foreground text-xs">This week</p>
-                </CardContent>
-              </Card>
-            </div>
+            <SessionHeader />
 
             {/* Session List */}
             {isPending ? (
@@ -397,17 +337,27 @@ export default function StudySessionsPage() {
                                   <p className="text-sm text-gray-600">
                                     {session.subject.title}
                                   </p>
-                                  <p className="mt-1 text-xs text-gray-500">
-                                    {session.startTime.toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}{" "}
-                                    -{" "}
-                                    {session.endTime.toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}
-                                  </p>
+                                  <div className="mt-1 flex gap-2 text-sm text-gray-500">
+                                    <p>
+                                      {moment(session.startTime).format(
+                                        "ddd, DD/MM/yyyy",
+                                      )}
+                                    </p>
+                                    <p>
+                                      {session.startTime.toLocaleTimeString(
+                                        [],
+                                        {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        },
+                                      )}{" "}
+                                      -{" "}
+                                      {session.endTime.toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-4">
@@ -415,7 +365,7 @@ export default function StudySessionsPage() {
                                 <Button
                                   onClick={() => startSession(session)}
                                   disabled={session.status === "completed"}
-                                  className="bg-indigo-600 hover:bg-indigo-700"
+                                  className="cursor-pointer bg-indigo-600 hover:bg-indigo-700"
                                 >
                                   <Play className="mr-2 h-4 w-4" />
                                   Start Session
@@ -424,7 +374,7 @@ export default function StudySessionsPage() {
                             </div>
                             {session.description && (
                               <div className="mt-3 border-t border-gray-100 pt-3">
-                                <p className="text-sm text-gray-600">
+                                <p className="text-xs text-gray-600">
                                   {session.description}
                                 </p>
                               </div>

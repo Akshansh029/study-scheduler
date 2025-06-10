@@ -46,6 +46,7 @@ import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import useRefetch from "hooks/use-refetch";
 import FadeLoader from "react-spinners/FadeLoader";
+import ScheduleHeader from "@/components/schedule-header";
 
 const localizer = momentLocalizer(moment);
 
@@ -264,14 +265,6 @@ export default function SchedulePage() {
     }
   }
 
-  const todayCount = sessions.filter((s) =>
-    moment(s.startTime).isSame(new Date(), "day"),
-  ).length;
-
-  const weekCount = sessions.filter((s) =>
-    moment(s.startTime).isSame(new Date(), "week"),
-  ).length;
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header + Dialog */}
@@ -411,47 +404,8 @@ export default function SchedulePage() {
           </DialogContent>
         </Dialog>
       </header>
-
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-6 p-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex justify-between pb-2">
-            <CardTitle>Today&apos;s sessions</CardTitle>
-            <CalendarIcon className="h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{todayCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex justify-between pb-2">
-            <CardTitle>This Week</CardTitle>
-            <CalendarDays className="h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{weekCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex justify-between pb-2">
-            <CardTitle>Study Time</CardTitle>
-            <Clock className="h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            {/* You can compute hours here */}
-            <div className="text-2xl font-bold">—h</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex justify-between pb-2">
-            <CardTitle>Completion</CardTitle>
-            <Play className="h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">—%</div>
-          </CardContent>
-        </Card>
-      </div>
+      <ScheduleHeader />
 
       {/* Calendar / Table */}
       {isPending ? (
@@ -477,7 +431,7 @@ export default function SchedulePage() {
                 startAccessor="start"
                 endAccessor="end"
                 defaultView={Views.WEEK}
-                views={[Views.MONTH, Views.WEEK, Views.DAY]}
+                views={[Views.WEEK, Views.DAY]}
                 eventPropGetter={eventPropGetter}
                 onSelectEvent={(e) => openEdit(e.resource)}
                 popup
@@ -491,7 +445,7 @@ export default function SchedulePage() {
                 </div>
               ) : (
                 sessions.map((s) => (
-                  <Card key={s.id} className="hover:shadow-md">
+                  <Card key={s.id} className="py-4 hover:shadow-md">
                     <CardContent className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div
@@ -507,17 +461,22 @@ export default function SchedulePage() {
                           <p className="text-sm text-gray-600">
                             {s.subject.title}
                           </p>
-                          <p className="mt-1 text-xs text-gray-500">
-                            {s.startTime.toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}{" "}
-                            -{" "}
-                            {s.endTime.toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
+                          <div className="mt-1 flex gap-2 text-sm text-gray-500">
+                            <p>
+                              {moment(s.startTime).format("ddd, DD/MM/yyyy")}
+                            </p>
+                            <p>
+                              {s.startTime.toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}{" "}
+                              -{" "}
+                              {s.endTime.toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

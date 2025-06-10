@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -27,18 +27,10 @@ import {
 import {
   Plus,
   Calendar as CalendarIcon,
-  CalendarDays,
-  Clock,
-  Play,
   Edit,
   Trash2,
   List,
 } from "lucide-react";
-import {
-  Calendar as BigCalendar,
-  momentLocalizer,
-  Views,
-} from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
@@ -47,8 +39,7 @@ import { toast } from "sonner";
 import useRefetch from "hooks/use-refetch";
 import FadeLoader from "react-spinners/FadeLoader";
 import ScheduleHeader from "@/components/schedule-header";
-
-const localizer = momentLocalizer(moment);
+import CalendarComponent from "@/components/calendar";
 
 interface StudySession {
   id: string;
@@ -90,6 +81,7 @@ export default function SchedulePage() {
   const subjects = api.subject.getSubjects.useQuery().data;
   const { data: rawSessions, isPending } =
     api.session.getAllSessions.useQuery();
+  console.log("Raw Sessions:", rawSessions);
 
   // Sessions mutations
   const createMutation = api.session.createSession.useMutation({
@@ -203,13 +195,19 @@ export default function SchedulePage() {
       return toast.error("All fields required");
     }
 
-    const start = new Date(form.startTime);
-    const end = new Date(form.endTime);
-    const now = new Date();
+    // Parse the local datetime string into a moment object
+    const localStartMoment = moment(form.startTime);
+    const localEndMoment = moment(form.endTime);
+
+    // Converting local moments to UTC Date objects for database storage
+    const start = localStartMoment.utc().toDate();
+    const end = localEndMoment.utc().toDate();
 
     if (start >= end) {
       return toast.error("End must be after start");
     }
+
+    const now = new Date();
 
     if (editing) {
       updateMutation.mutate({
@@ -222,17 +220,21 @@ export default function SchedulePage() {
         description: form.description || undefined,
       });
 
-      if (end < now) {
+      if (end.getTime() < now.getTime()) {
+        // Explicitly compare timestamps for clarity
         updateStatusMutation.mutate({
           sessionId: editing.id,
           updatedStatus: "completed",
         });
-      } else if (start > now) {
+      } else if (start.getTime() > now.getTime()) {
         updateStatusMutation.mutate({
           sessionId: editing.id,
           updatedStatus: "upcoming",
         });
-      } else if (start <= now && end >= now) {
+      } else if (
+        start.getTime() <= now.getTime() &&
+        end.getTime() >= now.getTime()
+      ) {
         updateStatusMutation.mutate({
           sessionId: editing.id,
           updatedStatus: "in-progress",
@@ -424,17 +426,21 @@ export default function SchedulePage() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="calendar" className="mt-4 h-[600px]">
-              <BigCalendar
-                localizer={localizer}
+            <TabsContent value="calendar" className="mt-4 h-[700px]">
+              <CalendarComponent
                 events={calendarEvents}
-                startAccessor="start"
-                endAccessor="end"
-                defaultView={Views.WEEK}
-                views={[Views.WEEK, Views.DAY]}
+                onSelectEvent={openEdit}
+                onDateSelect={(start, end) => {
+                  // Optional: Auto-open create dialog with pre-filled times
+                  setForm((prev) => ({
+                    ...prev,
+                    startTime: moment(start).local().format("YYYY-MM-DDTHH:mm"),
+                    endTime: moment(end).local().format("YYYY-MM-DDTHH:mm"),
+                  }));
+                  openCreate();
+                }}
                 eventPropGetter={eventPropGetter}
-                onSelectEvent={(e) => openEdit(e.resource)}
-                popup
+                isLoading={isPending}
               />
             </TabsContent>
 

@@ -5,7 +5,7 @@ import { Clock, Timer, Brain, Target } from "lucide-react";
 import { api } from "@/trpc/react";
 
 const SessionHeader = () => {
-  const { data } = api.session.studyTime.useQuery();
+  const { data } = api.session.sessionStats.useQuery();
   const hours = data?.hours ?? 0;
   const minutes = data?.minutes ?? 0;
   const sessionLength = data?.todayCount ?? 0;

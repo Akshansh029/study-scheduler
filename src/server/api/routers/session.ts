@@ -126,7 +126,7 @@ export const sessionRouter = createTRPCRouter({
       });
     }),
 
-  studyTime: protectedProcedure.query(async ({ ctx }) => {
+  sessionStats: protectedProcedure.query(async ({ ctx }) => {
     const todayStart = startOfDay(new Date());
     const todayEnd = endOfDay(new Date());
     const weekStart = moment().startOf("week").toDate();
@@ -139,20 +139,6 @@ export const sessionRouter = createTRPCRouter({
         startTime: {
           gte: todayStart,
           lte: todayEnd,
-        },
-      },
-      select: {
-        startTime: true,
-        endTime: true,
-      },
-    });
-
-    const weekSessions = await ctx.db.studySession.findMany({
-      where: {
-        userId: ctx.user.userId!,
-        startTime: {
-          gte: weekStart,
-          lte: weekEnd,
         },
       },
       select: {
@@ -176,10 +162,6 @@ export const sessionRouter = createTRPCRouter({
       moment(s.startTime).isSame(new Date(), "day"),
     ).length;
 
-    const weekCount = weekSessions.filter((s) =>
-      moment(s.startTime).isSame(new Date(), "week"),
-    ).length;
-
     const completedSessionsPercentage = Math.floor(
       (completedSessions / todayCount) * 100 || 0,
     );
@@ -192,6 +174,43 @@ export const sessionRouter = createTRPCRouter({
       return acc;
     }, 0);
 
+    const totalMinutes = Math.floor(totalStudyTimeMsToday / (1000 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    const weekSessions = await ctx.db.studySession.findMany({
+      where: {
+        userId: ctx.user.userId!,
+        startTime: {
+          gte: weekStart,
+          lte: weekEnd,
+        },
+      },
+      select: {
+        startTime: true,
+        endTime: true,
+      },
+    });
+
+    const completedWeekSessions = await ctx.db.studySession.count({
+      where: {
+        userId: ctx.user.userId!,
+        status: "completed",
+        startTime: {
+          gte: weekStart,
+          lte: weekEnd,
+        },
+      },
+    });
+
+    const weekCount = weekSessions.filter((s) =>
+      moment(s.startTime).isSame(new Date(), "week"),
+    ).length;
+
+    const completedWeekSessionsPercentage = Math.floor(
+      (completedWeekSessions / weekCount) * 100 || 0,
+    );
+
     // total time in milliseconds for the week
     const totalStudyTimeMsWeek = weekSessions.reduce((acc, session) => {
       if (session.startTime && session.endTime) {
@@ -199,10 +218,6 @@ export const sessionRouter = createTRPCRouter({
       }
       return acc;
     }, 0);
-
-    const totalMinutes = Math.floor(totalStudyTimeMsToday / (1000 * 60));
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
 
     const totalMinutesWeek = Math.floor(totalStudyTimeMsWeek / (1000 * 60));
     const weekHrs = Math.floor(totalMinutesWeek / 60);
@@ -216,6 +231,7 @@ export const sessionRouter = createTRPCRouter({
       todayCount,
       weekCount,
       completedSessionsPercentage,
+      completedWeekSessionsPercentage,
     };
   }),
 });

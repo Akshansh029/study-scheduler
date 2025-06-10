@@ -5,11 +5,13 @@ import { CalendarDays, CalendarIcon, Clock, Play } from "lucide-react";
 import { api } from "@/trpc/react";
 
 const ScheduleHeader = () => {
-  const { data } = api.session.studyTime.useQuery();
+  const { data } = api.session.sessionStats.useQuery();
   const todayCount = data?.todayCount ?? 0;
   const weekCount = data?.weekCount ?? 0;
   const weekHrs = data?.weekHrs ?? 0;
   const weekMins = data?.weekMins ?? 0;
+  const completedWeekSessionsPercentage =
+    data?.completedWeekSessionsPercentage ?? 0;
 
   return (
     <div className="grid grid-cols-1 gap-6 p-4 md:grid-cols-4">
@@ -53,7 +55,10 @@ const ScheduleHeader = () => {
           <Play className="h-4 w-4" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">—%</div>
+          <div className="text-2xl font-bold">
+            {completedWeekSessionsPercentage}%
+          </div>
+          <p className="text-muted-foreground text-xs">Week</p>
         </CardContent>
       </Card>
     </div>

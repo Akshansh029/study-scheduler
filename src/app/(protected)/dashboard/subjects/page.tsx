@@ -36,6 +36,7 @@ import { useUser } from "@clerk/nextjs";
 import { useForm } from "react-hook-form";
 import useRefetch from "hooks/use-refetch";
 import moment from "moment";
+import FadeLoader from "react-spinners/FadeLoader";
 
 interface Subject {
   id: string;
@@ -236,7 +237,7 @@ export default function SubjectsPage() {
 
       {isPending ? (
         <div className="mt-[250px] flex items-center justify-center">
-          <p>Retrieving all your data</p>
+          <FadeLoader className="h-15 w-15" color="#a5a7a9" />
         </div>
       ) : (
         <div className="p-6">

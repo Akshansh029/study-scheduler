@@ -21,6 +21,7 @@ import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import SessionHeader from "@/components/session-header";
 import moment from "moment";
+import useRefetch from "hooks/use-refetch";
 
 interface StudySession {
   id: string;
@@ -110,6 +111,8 @@ export default function StudySessionsPage() {
   const { data, isPending } = api.session.getAllSessions.useQuery();
   const updateStatusMutation = api.session.updateStatus.useMutation();
 
+  const refetch = useRefetch();
+
   useEffect(() => {
     if (data) {
       setSessions(data as StudySession[]);
@@ -192,7 +195,7 @@ export default function StudySessionsPage() {
           s.id === activeSession.id ? { ...s, status: "completed" } : s,
         ),
       );
-      // Update status in database
+      // Update status of the session
       void handleStatusUpdate(activeSession.id, "completed");
     }
     setActiveSession(null);
@@ -203,6 +206,7 @@ export default function StudySessionsPage() {
     setShowAnswer(false);
     setSessionProgress(0);
     setReviewedCards(0);
+    void refetch();
   };
 
   const handleCardRating = (rating: "easy" | "good" | "hard") => {
@@ -218,7 +222,6 @@ export default function StudySessionsPage() {
       setCurrentCardIndex(currentCardIndex + 1);
       setShowAnswer(false);
     } else {
-      // Session complete
       endSession();
     }
   };

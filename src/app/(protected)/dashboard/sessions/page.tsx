@@ -379,7 +379,7 @@ export default function StudySessionsPage() {
                       return (
                         <Card
                           key={session.id}
-                          className="transition-shadow hover:shadow-md"
+                          className="py-4 transition-shadow hover:shadow-md"
                         >
                           <CardContent className="px-6 py-0">
                             <div className="flex items-center justify-between">

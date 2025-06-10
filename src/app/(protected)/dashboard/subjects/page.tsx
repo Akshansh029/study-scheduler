@@ -1,6 +1,5 @@
 "use client";
 
-import { format } from "date-fns";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +35,7 @@ import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
 import { useForm } from "react-hook-form";
 import useRefetch from "hooks/use-refetch";
+import moment from "moment";
 
 interface Subject {
   id: string;
@@ -369,7 +369,8 @@ export default function SubjectsPage() {
                       <div>
                         <div className="text-gray-600">Created</div>
                         <div className="font-semibold">
-                          {format(subject.createdAt, "PPP")}
+                          {/* {format(subject.createdAt, "PPP")} */}
+                          {moment(subject.createdAt).format("MMM D, YYYY")}
                         </div>
                       </div>
                     </div>

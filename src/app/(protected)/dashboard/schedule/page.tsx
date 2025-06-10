@@ -89,9 +89,31 @@ export default function SchedulePage() {
   const subjects = api.subject.getSubjects.useQuery().data;
   const { data: rawSessions, isPending } =
     api.session.getAllSessions.useQuery();
+
+  // Sessions mutations
   const createMutation = api.session.createSession.useMutation({
     onSuccess: () => {
       toast.success("Session created");
+      void refetch();
+      closeDialog();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const updateMutation = api.session.updateSession.useMutation({
+    onSuccess: () => {
+      toast.success("Session updated");
+      void refetch();
+      closeDialog();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const updateStatusMutation = api.session.updateStatus.useMutation();
+
+  const deleteMutation = api.session.deleteSession.useMutation({
+    onSuccess: () => {
+      toast.success("Session deleted");
       void refetch();
       closeDialog();
     },
@@ -162,8 +184,8 @@ export default function SchedulePage() {
     setForm({
       title: sess.title,
       subjectId: sess.subjectId,
-      startTime: moment(sess.startTime).format("YYYY-MM-DDTHH:mm"),
-      endTime: moment(sess.endTime).format("YYYY-MM-DDTHH:mm"),
+      startTime: moment(sess.startTime).local().format("YYYY-MM-DDTHH:mm"),
+      endTime: moment(sess.endTime).local().format("YYYY-MM-DDTHH:mm"),
       recurrence: (sess.recurrence as RecType) ?? "none",
       description: sess.description ?? "",
     });
@@ -182,13 +204,45 @@ export default function SchedulePage() {
 
     const start = new Date(form.startTime);
     const end = new Date(form.endTime);
+    const now = new Date();
+
     if (start >= end) {
       return toast.error("End must be after start");
     }
 
     if (editing) {
-      // TODO: implement updateSession mutation
-      return toast.error("Update not yet implemented");
+      updateMutation.mutate({
+        id: editing.id,
+        title: form.title,
+        startTime: start,
+        endTime: end,
+        subjectId: form.subjectId,
+        recurrence: form.recurrence,
+        description: form.description || undefined,
+      });
+
+      if (end < now) {
+        updateStatusMutation.mutate({
+          sessionId: editing.id,
+          updatedStatus: "completed",
+        });
+      } else if (start > now) {
+        updateStatusMutation.mutate({
+          sessionId: editing.id,
+          updatedStatus: "upcoming",
+        });
+      } else if (start <= now && end >= now) {
+        updateStatusMutation.mutate({
+          sessionId: editing.id,
+          updatedStatus: "in-progress",
+        });
+      } else {
+        updateStatusMutation.mutate({
+          sessionId: editing.id,
+          updatedStatus: "overdue", // Fallback
+        });
+      }
+      return;
     }
 
     // create
@@ -200,6 +254,14 @@ export default function SchedulePage() {
       recurrence: form.recurrence === "none" ? undefined : form.recurrence,
       description: form.description || undefined,
     });
+  }
+
+  function handleDelete(sessionId: string) {
+    if (!editing) {
+      deleteMutation.mutate({
+        id: sessionId,
+      });
+    }
   }
 
   const todayCount = sessions.filter((s) =>
@@ -327,11 +389,16 @@ export default function SchedulePage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={closeDialog}>
+              <Button
+                variant="outline"
+                className="cursor-pointer"
+                onClick={closeDialog}
+              >
                 Cancel
               </Button>
               <Button
                 onClick={handleSave}
+                className="cursor-pointer"
                 disabled={createMutation.status === "pending"}
               >
                 {createMutation.status === "pending"
@@ -349,7 +416,7 @@ export default function SchedulePage() {
       <div className="grid grid-cols-1 gap-6 p-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex justify-between pb-2">
-            <CardTitle>Today&apos;s</CardTitle>
+            <CardTitle>Today&apos;s sessions</CardTitle>
             <CalendarIcon className="h-4 w-4" />
           </CardHeader>
           <CardContent>
@@ -464,9 +531,11 @@ export default function SchedulePage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleSave()}
+                          onClick={() => {
+                            handleDelete(s.id);
+                          }}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
                     </CardContent>

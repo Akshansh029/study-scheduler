@@ -42,7 +42,7 @@ model Subject {
     sessions StudySession[]
 }
 
-// Scheduled study sessions (time slots)
+// Scheduled study sessions
 model StudySession {
     id          String   @id @default(cuid())
     createdAt   DateTime @default(now())

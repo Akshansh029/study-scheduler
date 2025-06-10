@@ -1,9 +1,10 @@
 import React from "react";
+import FadeLoader from "react-spinners/FadeLoader";
 
 const LoadingPage = () => {
   return (
     <div className="flex h-screen w-full items-center justify-center">
-      <p className="text-3xl font-semibold">Loading...</p>
+      <FadeLoader className="h-15 w-15" color="#a5a7a9" />
     </div>
   );
 };

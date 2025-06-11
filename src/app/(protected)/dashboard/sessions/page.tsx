@@ -29,14 +29,10 @@ interface StudySession {
   startTime: Date;
   endTime: Date;
   subjectId: string;
-  subject: {
-    id: string;
-    title: string;
-    color: string;
-  };
-  description?: string;
-  recurrence?: string;
-  status: SessionStatus;
+  subject: { id: string; title: string; color: string };
+  recurrence?: string | null;
+  description?: string | null;
+  status: "upcoming" | "in-progress" | "completed" | "due-now" | "overdue";
 }
 
 type SessionStatus =

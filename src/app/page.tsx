@@ -34,7 +34,7 @@ export default function LandingPage() {
               <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-400"></div>
             </div>
             <div>
-              <span className="text-xl font-bold text-gray-900">StudyFlow</span>
+              <span className="text-xl font-bold text-gray-900">SlotWise</span>
               <div className="-mt-1 text-xs text-gray-500">
                 Science-Based Learning
               </div>
@@ -91,7 +91,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="mx-auto mb-12 max-w-3xl text-xl leading-relaxed text-gray-600 md:text-2xl">
-            StudyFlow uses proven neuroscience techniques to help you retain 80%
+            SlotWise uses proven neuroscience techniques to help you retain 80%
             more information while studying 50% less. No gimmicks, just science.
           </p>
 
@@ -114,7 +114,7 @@ export default function LandingPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">With StudyFlow</span>
+                  <span className="text-sm text-gray-600">With SlotWise</span>
                   <div className="mx-4 h-2 flex-1 rounded-full bg-gray-200">
                     <div className="h-2 w-5/6 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"></div>
                   </div>
@@ -171,7 +171,7 @@ export default function LandingPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="mb-16 text-center">
             <h2 className="mb-4 text-4xl font-bold text-gray-900">
-              How StudyFlow Works
+              How SlotWise Works
             </h2>
             <p className="mx-auto max-w-2xl text-xl text-gray-600">
               Three simple steps backed by decades of cognitive science research
@@ -229,7 +229,7 @@ export default function LandingPage() {
               Built on Proven Science
             </h2>
             <p className="mx-auto max-w-3xl text-xl text-gray-600">
-              StudyFlow combines two powerful learning techniques that have been
+              SlotWise combines two powerful learning techniques that have been
               validated by decades of research
             </p>
           </div>
@@ -315,7 +315,7 @@ export default function LandingPage() {
               Real Results from Real Students
             </h2>
             <p className="text-xl text-gray-600">
-              See how StudyFlow has transformed learning for thousands of
+              See how SlotWise has transformed learning for thousands of
               students
             </p>
           </div>
@@ -371,7 +371,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <p className="leading-relaxed text-gray-700">
-                  &quot;StudyFlow helped me go from struggling with organic
+                  &quot;SlotWise helped me go from struggling with organic
                   chemistry to acing my MCAT. The spaced repetition made complex
                   concepts stick in ways I never thought possible.&quot;
                 </p>
@@ -395,7 +395,7 @@ export default function LandingPage() {
                 </div>
                 <p className="leading-relaxed text-gray-700">
                   &quot;I used to spend hours re-reading textbooks. Now I study
-                  half the time and remember twice as much. StudyFlow&apos;s
+                  half the time and remember twice as much. SlotWise&apos;s
                   algorithm is incredibly smart.&quot;
                 </p>
               </CardHeader>
@@ -413,7 +413,7 @@ export default function LandingPage() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
                   <Brain className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold">StudyFlow</span>
+                <span className="text-xl font-bold">SlotWise</span>
               </div>
               <p className="leading-relaxed text-gray-400">
                 Science-based learning that helps students remember more while
@@ -498,7 +498,7 @@ export default function LandingPage() {
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
             <p>
-              &copy; 2024 StudyFlow. All rights reserved. Built with science and
+              &copy; 2024 SlotWise. All rights reserved. Built with science and
               care.
             </p>
           </div>

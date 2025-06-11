@@ -190,6 +190,7 @@ export default function SchedulePage() {
     setEditing(null);
   }
 
+  console.log("Form data from submitting form:", form.startTime);
   function handleSave() {
     if (!form.title || !form.subjectId || !form.startTime || !form.endTime) {
       return toast.error("All fields required");
@@ -200,8 +201,8 @@ export default function SchedulePage() {
     const localEndMoment = moment(form.endTime);
 
     // Converting local moments to UTC Date objects for database storage
-    const start = localStartMoment.utc().toDate();
-    const end = localEndMoment.utc().toDate();
+    const start = localStartMoment.toDate();
+    const end = localEndMoment.toDate();
 
     if (start >= end) {
       return toast.error("End must be after start");

@@ -1,4 +1,5 @@
 "use client";
+import dayjs from "dayjs";
 import React, { useRef } from "react";
 import FullCalendar from "@fullcalendar/react";
 import type {
@@ -59,18 +60,20 @@ export default function CalendarComponent({
   const transformEvents = (): EventInput[] => {
     return events.map((evt) => {
       const { resource: session } = evt;
+
       const baseEvent: EventInput = {
         id: session.id,
         title: session.title,
         backgroundColor: session.subject.color,
         borderColor: session.subject.color,
         textColor: "white",
-        description: session.description || "",
-        // Always set start and end for proper time slot display for all events
+        description: session.description ?? "",
         start: session.startTime,
         end: session.endTime,
-        allDay: false, // Ensure it's not treated as an all-day event
+        allDay: false,
       };
+
+      console.log("Time going in calendar: ", session.startTime);
 
       if (session.recurrence && session.recurrence !== "none") {
         const ms = session.endTime.getTime() - session.startTime.getTime();
@@ -80,21 +83,12 @@ export default function CalendarComponent({
 
         baseEvent.rrule = {
           freq: session.recurrence.toUpperCase(),
-          dtstart: session.startTime, // Use the start time of the first event in the series
-          // IMPORTANT: Remove or correctly set 'until'.
-          // If the recurrence is meant to be indefinite, remove 'until'.
-          // If there's a specific end date for the *series*, use a date-only Date object.
-          // For now, removing it to fix the overlap issue.
+          dtstart: session.startTime,
           // until: session.endTime, // This was the problematic line for 'until'
         };
 
         baseEvent.duration = isoDuration;
-        // The `start` and `end` on `baseEvent` already define the time of day for each recurrence.
-        // FullCalendar uses `dtstart` from `rrule` to determine the initial date and time of the series,
-        // and `duration` for how long each instance lasts.
-        // `allDay: false` ensures it's placed in the time grid.
       }
-      // For non-recurring events, `start`, `end`, and `allDay: false` are already correctly set above.
 
       return baseEvent;
     });
@@ -151,16 +145,17 @@ export default function CalendarComponent({
         height="700px"
         slotMinTime="00:00:00"
         slotMaxTime="24:00:00"
-        allDaySlot={true}
+        allDaySlot={false}
         nowIndicator
-        businessHours={{
-          daysOfWeek: [1, 2, 3, 4, 5, 6, 0], // All days
-          startTime: "08:00",
-          endTime: "22:00",
-        }}
-        slotDuration="00:30:00" // 30-minute slots
+        //   timeZone="Asia/Kolkata"
+        slotDuration="00:30:00"
         snapDuration="00:15:00"
         expandRows={true}
+        dayHeaderFormat={{
+          weekday: "short",
+          day: "2-digit",
+          month: "2-digit",
+        }}
       />
     </div>
   );

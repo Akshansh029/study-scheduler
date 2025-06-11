@@ -2,6 +2,7 @@ import { startOfDay, endOfDay } from "date-fns";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import moment from "moment";
+import { RRule } from "rrule";
 
 export const sessionRouter = createTRPCRouter({
   createSession: protectedProcedure
@@ -127,48 +128,87 @@ export const sessionRouter = createTRPCRouter({
     }),
 
   sessionStats: protectedProcedure.query(async ({ ctx }) => {
-    const todayStart = startOfDay(new Date());
-    const todayEnd = endOfDay(new Date());
+    const today = new Date();
     const weekStart = moment().startOf("week").toDate();
     const weekEnd = moment().endOf("week").toDate();
 
-    // Sessions for today
     const sessions = await ctx.db.studySession.findMany({
       where: {
         userId: ctx.user.userId!,
-        startTime: {
-          gte: todayStart,
-          lte: todayEnd,
-        },
+        OR: [
+          {
+            startTime: {
+              gte: weekStart,
+              lte: weekEnd,
+            },
+          },
+          {
+            recurrence: {
+              not: null,
+            },
+          },
+        ],
       },
       select: {
         startTime: true,
         endTime: true,
+        recurrence: true,
+        status: true,
       },
     });
 
-    const completedSessions = await ctx.db.studySession.count({
-      where: {
-        userId: ctx.user.userId!,
-        status: "completed",
-        startTime: {
-          gte: todayStart,
-          lte: todayEnd,
-        },
-      },
-    });
+    const occurrencesThisWeek: {
+      startTime: Date;
+      endTime: Date;
+      status: string;
+    }[] = [];
 
-    const todayCount = sessions.filter((s) =>
-      moment(s.startTime).isSame(new Date(), "day"),
+    for (const session of sessions) {
+      const duration = session.endTime.getTime() - session.startTime.getTime();
+
+      if (!session.recurrence || session.recurrence === "none") {
+        if (session.startTime >= weekStart && session.startTime <= weekEnd) {
+          occurrencesThisWeek.push(session);
+        }
+      } else {
+        const rule = new RRule({
+          freq:
+            session.recurrence === "daily"
+              ? RRule.DAILY
+              : session.recurrence === "weekly"
+                ? RRule.WEEKLY
+                : RRule.MONTHLY,
+          dtstart: session.startTime,
+          until: weekEnd,
+        });
+
+        const occurrenceDates = rule.between(weekStart, weekEnd, true);
+
+        occurrenceDates.forEach((occ) => {
+          occurrencesThisWeek.push({
+            startTime: occ,
+            endTime: new Date(occ.getTime() + duration),
+            status: session.status,
+          });
+        });
+      }
+    }
+
+    const todayCount = occurrencesThisWeek.filter((s) =>
+      moment(s.startTime).isSame(today, "day"),
+    ).length;
+
+    const completedSessions = occurrencesThisWeek.filter(
+      (s) =>
+        s.status === "completed" && moment(s.startTime).isSame(today, "day"),
     ).length;
 
     const completedSessionsPercentage = Math.floor(
       (completedSessions / todayCount) * 100 || 0,
     );
 
-    // total time in milliseconds for today
-    const totalStudyTimeMsToday = sessions.reduce((acc, session) => {
-      if (session.startTime && session.endTime) {
+    const totalStudyTimeMsToday = occurrencesThisWeek.reduce((acc, session) => {
+      if (moment(session.startTime).isSame(today, "day")) {
         return acc + (session.endTime.getTime() - session.startTime.getTime());
       }
       return acc;
@@ -178,45 +218,18 @@ export const sessionRouter = createTRPCRouter({
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
 
-    const weekSessions = await ctx.db.studySession.findMany({
-      where: {
-        userId: ctx.user.userId!,
-        startTime: {
-          gte: weekStart,
-          lte: weekEnd,
-        },
-      },
-      select: {
-        startTime: true,
-        endTime: true,
-      },
-    });
+    const weekCount = occurrencesThisWeek.length;
 
-    const completedWeekSessions = await ctx.db.studySession.count({
-      where: {
-        userId: ctx.user.userId!,
-        status: "completed",
-        startTime: {
-          gte: weekStart,
-          lte: weekEnd,
-        },
-      },
-    });
-
-    const weekCount = weekSessions.filter((s) =>
-      moment(s.startTime).isSame(new Date(), "week"),
+    const completedWeekSessions = occurrencesThisWeek.filter(
+      (s) => s.status === "completed",
     ).length;
 
     const completedWeekSessionsPercentage = Math.floor(
       (completedWeekSessions / weekCount) * 100 || 0,
     );
 
-    // total time in milliseconds for the week
-    const totalStudyTimeMsWeek = weekSessions.reduce((acc, session) => {
-      if (session.startTime && session.endTime) {
-        return acc + (session.endTime.getTime() - session.startTime.getTime());
-      }
-      return acc;
+    const totalStudyTimeMsWeek = occurrencesThisWeek.reduce((acc, session) => {
+      return acc + (session.endTime.getTime() - session.startTime.getTime());
     }, 0);
 
     const totalMinutesWeek = Math.floor(totalStudyTimeMsWeek / (1000 * 60));

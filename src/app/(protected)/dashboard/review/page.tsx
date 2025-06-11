@@ -20,6 +20,7 @@ import moment from "moment";
 import { api } from "@/trpc/react";
 import { set, string } from "zod";
 import { toast } from "sonner";
+import TopHeader from "@/components/TopHeader";
 
 // Types based on the Prisma schema
 interface Subject {
@@ -160,17 +161,10 @@ export default function ReviewPage() {
   if (totalDue === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <header className="border-b bg-white px-6 py-4">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Review</h1>
-              <p className="text-gray-600">
-                Active recall practice with spaced repetition
-              </p>
-            </div>
-          </div>
-        </header>
+        <TopHeader
+          title="Review"
+          subtitle="Active recall practice with spaced repetition"
+        />
 
         <div className="p-6">
           <Card className="mx-auto max-w-2xl">
@@ -216,34 +210,10 @@ export default function ReviewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b bg-white px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Review</h1>
-              <p className="text-gray-600">
-                Choose a subject to start your review session
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="text-right">
-              <div className="text-sm text-gray-600">Cards Due</div>
-              <div className="text-lg font-semibold">{totalDue}</div>
-            </div>
-            {totalOverdue > 0 && (
-              <div className="text-right">
-                <div className="text-sm text-gray-600">Overdue</div>
-                <div className="text-lg font-semibold text-red-600">
-                  {totalOverdue}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <TopHeader
+        title="Review"
+        subtitle="Active recall practice with spaced repetition"
+      />
 
       <div className="p-6">
         {/* Stats Overview */}
@@ -386,22 +356,6 @@ export default function ReviewPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Quick Actions */}
-        <div className="mt-8 flex justify-center gap-4">
-          <Button variant="outline" asChild>
-            <Link href="/dashboard/flashcards">
-              <BookOpen className="mr-2 h-4 w-4" />
-              Manage Flashcards
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/dashboard/schedule">
-              <Calendar className="mr-2 h-4 w-4" />
-              View Schedule
-            </Link>
-          </Button>
-        </div>
       </div>
     </div>
   );

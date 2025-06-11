@@ -26,6 +26,7 @@ import {
   Award,
 } from "lucide-react";
 import type { TodoItem } from "@/types";
+import TopHeader from "@/components/TopHeader";
 
 export default function DashboardPage() {
   const [todos, setTodos] = useState<TodoItem[]>([
@@ -96,28 +97,10 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b bg-white px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600">
-                Welcome back! Here&apos;s your study overview.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <Flame className="h-4 w-4" />7 day streak
-            </Badge>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Session
-            </Button>
-          </div>
-        </div>
-      </header>
+      <TopHeader
+        title="Dashboard"
+        subtitle="Welcome back! Here's your study overview."
+      />
 
       <div className="space-y-6 p-6">
         {/* Stats Overview */}

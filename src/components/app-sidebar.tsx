@@ -28,6 +28,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "./ui/button";
 
 // Menu items for main navigation
 const mainItems = [
@@ -83,9 +84,14 @@ const quickActions = [
     icon: Plus,
   },
   {
-    title: "Quick Review",
+    title: "New Session",
     url: "/dashboard/review/quick",
-    icon: Clock,
+    icon: Plus,
+  },
+  {
+    title: "New Subject",
+    url: "/dashboard/review/quick",
+    icon: Plus,
   },
 ];
 
@@ -157,10 +163,10 @@ export function AppSidebar() {
               {quickActions.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Link href={item.url}>
+                    <Button onClick={}>
                       <item.icon />
                       <span>{item.title}</span>
-                    </Link>
+                    </Button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

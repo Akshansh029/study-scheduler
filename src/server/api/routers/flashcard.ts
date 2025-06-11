@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import moment from "moment";
 
 export const flashcardRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -243,4 +244,50 @@ export const flashcardRouter = createTRPCRouter({
         },
       });
     }),
+
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.user.userId!;
+    const flashcards = await ctx.db.flashcard.findMany({
+      where: {
+        subject: {
+          userId,
+        },
+      },
+      include: {
+        subject: {
+          select: {
+            id: true,
+            title: true,
+            color: true,
+          },
+        },
+      },
+    });
+
+    // Calculate stats
+    const totalFlashcards = flashcards.length;
+    const dueToday = flashcards.filter((card) =>
+      moment(card.nextReviewDate).isSameOrBefore(moment(), "day"),
+    ).length;
+    const completedThisWeek = flashcards.filter(
+      (card) =>
+        card.repetitionCount > 0 &&
+        moment(card.updatedAt).isAfter(moment().subtract(7, "days")),
+    ).length;
+    const averageEaseFactor =
+      flashcards.length > 0
+        ? Math.round(
+            (flashcards.reduce((sum, card) => sum + card.easeFactor, 0) /
+              flashcards.length) *
+              100,
+          ) / 100
+        : 0;
+
+    return {
+      totalFlashcards,
+      dueToday,
+      completedThisWeek,
+      averageEaseFactor,
+    };
+  }),
 });

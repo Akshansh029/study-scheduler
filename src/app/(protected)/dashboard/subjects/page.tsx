@@ -31,6 +31,7 @@ import moment from "moment";
 import FadeLoader from "react-spinners/FadeLoader";
 import type { FormInput, Subject } from "@/types";
 import SubjectHeader from "@/components/subject-header";
+import TopHeader from "@/components/TopHeader";
 
 const colorOptions = [
   { name: "Indigo", value: "#4F46E5", bg: "bg-indigo-500" },
@@ -122,94 +123,12 @@ export default function SubjectsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b bg-white px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Subjects</h1>
-              <p className="text-gray-600">
-                Organize your study materials by subject
-              </p>
-            </div>
-          </div>
-          <Dialog
-            open={isCreateDialogOpen}
-            onOpenChange={(open) => {
-              if (!open) {
-                setIsCreateDialogOpen(false);
-                reset();
-                setSelectedColor("#4F46E5");
-              }
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Subject
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Create New Subject</DialogTitle>
-                <DialogDescription>
-                  Add a new subject to organize your study materials.
-                </DialogDescription>
-              </DialogHeader>
-              <form
-                onSubmit={handleSubmit(onSubmit)}
-                className="grid gap-4 py-4"
-              >
-                <div className="grid gap-2">
-                  <Label htmlFor="title">Subject Name</Label>
-                  <Input
-                    id="title"
-                    placeholder="e.g., Physics, Mathematics, History"
-                    {...register("title", { required: true })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Color Theme</Label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {colorOptions.map((color) => (
-                      <button
-                        key={color.value}
-                        type="button"
-                        className={`h-12 w-12 rounded-lg ${color.bg} ${
-                          selectedColor === color.value
-                            ? "ring-2 ring-gray-900 ring-offset-2"
-                            : ""
-                        }`}
-                        onClick={() => setSelectedColor(color.value)}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    onClick={() => {
-                      reset();
-                      setIsCreateDialogOpen(false);
-                      setSelectedColor("#4F46E5");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    className="cursor-pointer"
-                    type="submit"
-                    disabled={loading}
-                  >
-                    {loading ? "Creating" : "Create Subject"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </header>
+      <TopHeader
+        title="Subjects"
+        subtitle="Organize your study materials by subject"
+        buttonText="New Subject"
+        functionProp={() => setIsCreateDialogOpen(true)}
+      />
 
       {isPending ? (
         <div className="mt-[250px] flex items-center justify-center">
@@ -339,6 +258,78 @@ export default function SubjectsPage() {
           )}
         </div>
       )}
+      <Dialog
+        open={isCreateDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsCreateDialogOpen(false);
+            reset();
+            setSelectedColor("#4F46E5");
+          }
+        }}
+      >
+        {/* <DialogTrigger asChild>
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Subject
+              </Button>
+            </DialogTrigger> */}
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Subject</DialogTitle>
+            <DialogDescription>
+              Add a new subject to organize your study materials.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="title">Subject Name</Label>
+              <Input
+                id="title"
+                placeholder="e.g., Physics, Mathematics, History"
+                {...register("title", { required: true })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Color Theme</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {colorOptions.map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    className={`h-12 w-12 rounded-lg ${color.bg} ${
+                      selectedColor === color.value
+                        ? "ring-2 ring-gray-900 ring-offset-2"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedColor(color.value)}
+                  />
+                ))}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  reset();
+                  setIsCreateDialogOpen(false);
+                  setSelectedColor("#4F46E5");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="cursor-pointer"
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? "Creating" : "Create Subject"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

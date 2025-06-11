@@ -50,6 +50,7 @@ import FlashcardHeader from "@/components/flashcard-header";
 import useRefetch from "hooks/use-refetch";
 import { set } from "zod";
 import FadeLoader from "react-spinners/FadeLoader";
+import TopHeader from "@/components/TopHeader";
 
 // Types based on the schema
 interface Flashcard {
@@ -175,25 +176,6 @@ export default function FlashcardsPage() {
     return acc;
   }, {});
 
-  // Calculate stats
-  const totalFlashcards = flashcards.length;
-  const dueToday = flashcards.filter((card) =>
-    moment(card.nextReviewDate).isSameOrBefore(moment(), "day"),
-  ).length;
-  const completedThisWeek = flashcards.filter(
-    (card) =>
-      card.repetitionCount > 0 &&
-      moment(card.updatedAt).isAfter(moment().subtract(7, "days")),
-  ).length;
-  const averageEaseFactor =
-    flashcards.length > 0
-      ? Math.round(
-          (flashcards.reduce((sum, card) => sum + card.easeFactor, 0) /
-            flashcards.length) *
-            100,
-        ) / 100
-      : 0;
-
   // Functions for flashcard management
   function openCreateDialog() {
     setEditingFlashcard(null);
@@ -286,25 +268,12 @@ export default function FlashcardsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b bg-white px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Flashcards</h1>
-              <p className="text-gray-600">
-                Create and manage your study materials
-              </p>
-            </div>
-          </div>
-          <Button onClick={openCreateDialog} className="cursor-pointer">
-            <Plus className="mr-2 h-4 w-4" />
-            New Flashcard
-          </Button>
-        </div>
-      </header>
-      {/* Stats Overview */}
+      <TopHeader
+        functionProp={openCreateDialog}
+        title="Flashcards"
+        subtitle="Create and manage your study materials"
+        buttonText="New Flashcard"
+      />
       <FlashcardHeader />
       {/* Search and Filters */}
       <div className="px-6 pb-6">

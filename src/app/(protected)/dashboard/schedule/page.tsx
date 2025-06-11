@@ -40,6 +40,7 @@ import FadeLoader from "react-spinners/FadeLoader";
 import ScheduleHeader from "@/components/schedule-header";
 import CalendarComponent from "@/components/calendar";
 import type { StudySession, FormState, RecType } from "@/types";
+import TopHeader from "@/components/TopHeader";
 
 export default function SchedulePage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -247,144 +248,12 @@ export default function SchedulePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header + Dialog */}
-      <header className="flex items-center justify-between border-b bg-white p-4">
-        <div className="flex items-center gap-4">
-          <SidebarTrigger />
-          <div>
-            <h1 className="text-2xl font-bold">Schedule</h1>
-            <p className="text-gray-600">Manage your study sessions</p>
-          </div>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={(o) => !o && closeDialog()}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreate}>
-              <Plus className="mr-2 h-4 w-4" /> New Session
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>
-                {editing ? "Edit Session" : "Create New Session"}
-              </DialogTitle>
-              <DialogDescription>
-                {editing
-                  ? "Update details below."
-                  : "Fill out to schedule a session."}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label>Title</Label>
-                <Input
-                  value={form.title}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, title: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Subject</Label>
-                <Select
-                  value={form.subjectId}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, subjectId: v }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subjects?.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: s.color }}
-                          />
-                          {s.title}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label>Start</Label>
-                  <Input
-                    type="datetime-local"
-                    value={form.startTime}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, startTime: e.target.value }))
-                    }
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>End</Label>
-                  <Input
-                    type="datetime-local"
-                    value={form.endTime}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, endTime: e.target.value }))
-                    }
-                  />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label>Recurrence</Label>
-                <Select
-                  value={form.recurrence}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, recurrence: v as RecType }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No repeat</SelectItem>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label>Description</Label>
-                <Textarea
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, description: e.target.value }))
-                  }
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                className="cursor-pointer"
-                onClick={closeDialog}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                className="cursor-pointer"
-                disabled={createMutation.status === "pending"}
-              >
-                {createMutation.status === "pending"
-                  ? "Saving..."
-                  : editing
-                    ? "Update"
-                    : "Create"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </header>
-      {/* Stats */}
+      <TopHeader
+        functionProp={openCreate}
+        title="Schedule"
+        subtitle="Manage your study sessions"
+        buttonText="New Session"
+      />
       <ScheduleHeader />
 
       {/* Calendar / Table */}
@@ -489,6 +358,126 @@ export default function SchedulePage() {
           </Tabs>
         </div>
       )}
+      <Dialog open={isDialogOpen} onOpenChange={(o) => !o && closeDialog()}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editing ? "Edit Session" : "Create New Session"}
+            </DialogTitle>
+            <DialogDescription>
+              {editing
+                ? "Update details below."
+                : "Fill out to schedule a session."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Title</Label>
+              <Input
+                value={form.title}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, title: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Subject</Label>
+              <Select
+                value={form.subjectId}
+                onValueChange={(v) => setForm((f) => ({ ...f, subjectId: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subjects?.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: s.color }}
+                        />
+                        {s.title}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Start</Label>
+                <Input
+                  type="datetime-local"
+                  value={form.startTime}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, startTime: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>End</Label>
+                <Input
+                  type="datetime-local"
+                  value={form.endTime}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, endTime: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Recurrence</Label>
+              <Select
+                value={form.recurrence}
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, recurrence: v as RecType }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No repeat</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Description</Label>
+              <Textarea
+                rows={3}
+                value={form.description}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, description: e.target.value }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={closeDialog}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="cursor-pointer"
+              disabled={createMutation.status === "pending"}
+            >
+              {createMutation.status === "pending"
+                ? "Saving..."
+                : editing
+                  ? "Update"
+                  : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

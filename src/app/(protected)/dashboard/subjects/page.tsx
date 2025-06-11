@@ -37,24 +37,7 @@ import { useForm } from "react-hook-form";
 import useRefetch from "hooks/use-refetch";
 import moment from "moment";
 import FadeLoader from "react-spinners/FadeLoader";
-
-interface Subject {
-  id: string;
-  title: string;
-  color: string;
-  createdAt: Date;
-  updatedAt: Date;
-  userId: string;
-  // Additional computed fields for display
-  // cardCount?: number;
-  // lastStudied?: Date;
-  // nextReview?: Date;
-}
-
-type FormInput = {
-  title: string;
-  color: string;
-};
+import type { FormInput, Subject } from "@/types";
 
 const colorOptions = [
   { name: "Indigo", value: "#4F46E5", bg: "bg-indigo-500" },

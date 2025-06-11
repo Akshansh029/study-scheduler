@@ -40,29 +40,7 @@ import useRefetch from "hooks/use-refetch";
 import FadeLoader from "react-spinners/FadeLoader";
 import ScheduleHeader from "@/components/schedule-header";
 import CalendarComponent from "@/components/calendar";
-
-interface StudySession {
-  id: string;
-  title: string;
-  startTime: Date;
-  endTime: Date;
-  subjectId: string;
-  subject: { id: string; title: string; color: string };
-  recurrence?: string | null;
-  description?: string | null;
-  status: "upcoming" | "in-progress" | "completed" | "due-now" | "overdue";
-}
-
-type RecType = "none" | "daily" | "weekly" | "monthly";
-
-interface FormState {
-  title: string;
-  subjectId: string;
-  startTime: string;
-  endTime: string;
-  recurrence: RecType;
-  description: string;
-}
+import type { StudySession, FormState, RecType } from "@/types";
 
 export default function SchedulePage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);

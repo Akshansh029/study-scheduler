@@ -22,37 +22,7 @@ import { toast } from "sonner";
 import SessionHeader from "@/components/session-header";
 import moment from "moment";
 import useRefetch from "hooks/use-refetch";
-
-interface StudySession {
-  id: string;
-  title: string;
-  startTime: Date;
-  endTime: Date;
-  subjectId: string;
-  subject: { id: string; title: string; color: string };
-  recurrence?: string | null;
-  description?: string | null;
-  status: "upcoming" | "in-progress" | "completed" | "due-now" | "overdue";
-}
-
-type SessionStatus =
-  | "upcoming"
-  | "in-progress"
-  | "completed"
-  | "overdue"
-  | "due-now";
-
-interface Flashcard {
-  id: string;
-  question: string;
-  answer: string;
-  subjectId: string;
-  difficulty: "easy" | "medium" | "hard";
-  nextReviewDate: Date;
-  interval: number;
-  repetitionCount: number;
-  easeFactor: number;
-}
+import type { StudySession, Flashcard, SessionStatus } from "@/types";
 
 const mockFlashcards: Flashcard[] = [
   {

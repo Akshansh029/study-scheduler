@@ -12,41 +12,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import rrulePlugin from "@fullcalendar/rrule";
-
-interface StudySession {
-  id: string;
-  title: string;
-  startTime: Date;
-  endTime: Date;
-  subjectId: string;
-  subject: { id: string; title: string; color: string };
-  recurrence?: string | null;
-  description?: string | null;
-  status: "upcoming" | "in-progress" | "completed" | "due-now" | "overdue";
-}
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  resource: StudySession;
-}
-
-interface CalendarComponentProps {
-  events: CalendarEvent[];
-  onSelectEvent: (session: StudySession) => void;
-  onDateSelect?: (start: Date, end: Date) => void;
-  eventPropGetter?: (event: CalendarEvent) => { style: React.CSSProperties };
-  isLoading?: boolean;
-}
-
-// Define RRule interface to match FullCalendar's expected structure
-interface RRuleConfig {
-  freq: string;
-  dtstart: Date | string;
-  until?: Date | string; // 'until' should be a date, not a specific time usually.
-}
+import type { CalendarComponentProps } from "@/types";
 
 export default function CalendarComponent({
   events,

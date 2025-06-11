@@ -25,13 +25,7 @@ import {
   Flame,
   Award,
 } from "lucide-react";
-
-interface TodoItem {
-  id: string;
-  text: string;
-  completed: boolean;
-  priority: "low" | "medium" | "high";
-}
+import type { TodoItem } from "@/types";
 
 export default function DashboardPage() {
   const [todos, setTodos] = useState<TodoItem[]>([

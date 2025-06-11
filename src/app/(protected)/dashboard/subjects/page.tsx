@@ -21,15 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Plus,
-  BookOpen,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Calendar,
-  Target,
-} from "lucide-react";
+import { Plus, BookOpen, MoreVertical, Edit, Trash2 } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
@@ -38,6 +30,7 @@ import useRefetch from "hooks/use-refetch";
 import moment from "moment";
 import FadeLoader from "react-spinners/FadeLoader";
 import type { FormInput, Subject } from "@/types";
+import SubjectHeader from "@/components/subject-header";
 
 const colorOptions = [
   { name: "Indigo", value: "#4F46E5", bg: "bg-indigo-500" },
@@ -225,64 +218,7 @@ export default function SubjectsPage() {
       ) : (
         <div className="p-6">
           {/* Stats Overview */}
-          <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Subjects
-                </CardTitle>
-                <BookOpen className="text-muted-foreground h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{subjects?.length}</div>
-                <p className="text-muted-foreground text-xs">
-                  Active study subjects
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Cards
-                </CardTitle>
-                <Target className="text-muted-foreground h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {/* {subjects.reduce((sum, s) => sum + (s.cardCount ?? 0), 0)} */}
-                  {subjects?.reduce((sum, s) => sum + 0, 0)}
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  Across all subjects
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Due Today</CardTitle>
-                <Calendar className="text-muted-foreground h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">42</div>
-                <p className="text-muted-foreground text-xs">Cards to review</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Study Streak
-                </CardTitle>
-                <Target className="text-muted-foreground h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">7 days</div>
-                <p className="text-muted-foreground text-xs">Keep it up!</p>
-              </CardContent>
-            </Card>
-          </div>
+          <SubjectHeader />
 
           {/* Subjects Grid */}
           {subjects?.length === 0 ? (

@@ -67,4 +67,16 @@ export const subjectRouter = createTRPCRouter({
         },
       });
     }),
+
+  subjectStats: protectedProcedure.query(async ({ ctx }) => {
+    const subjects = await ctx.db.subject.findMany({
+      where: {
+        userId: ctx.user.userId!,
+      },
+    });
+
+    return {
+      subLength: subjects.length,
+    };
+  }),
 });

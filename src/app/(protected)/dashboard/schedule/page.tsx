@@ -32,7 +32,6 @@ import {
   List,
 } from "lucide-react";
 import moment from "moment";
-import "react-big-calendar/lib/css/react-big-calendar.css";
 
 import { api } from "@/trpc/react";
 import { toast } from "sonner";

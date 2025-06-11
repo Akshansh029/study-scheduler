@@ -467,7 +467,10 @@ export default function SchedulePage() {
             <Button
               onClick={handleSave}
               className="cursor-pointer"
-              disabled={createMutation.status === "pending"}
+              disabled={
+                createMutation.status === "pending" ||
+                updateMutation.status === "pending"
+              }
             >
               {createMutation.status === "pending"
                 ? "Saving..."

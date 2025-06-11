@@ -264,7 +264,6 @@ export const flashcardRouter = createTRPCRouter({
       },
     });
 
-    // Calculate stats
     const totalFlashcards = flashcards.length;
     const dueToday = flashcards.filter((card) =>
       moment(card.nextReviewDate).isSameOrBefore(moment(), "day"),

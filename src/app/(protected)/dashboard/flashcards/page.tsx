@@ -466,6 +466,7 @@ export default function FlashcardsPage() {
                                       ...prev,
                                       subjectId: subject.id,
                                     }));
+                                    console.log(form);
                                     openCreateDialog();
                                   }}
                                 >

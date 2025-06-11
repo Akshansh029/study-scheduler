@@ -21,7 +21,6 @@ import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import SessionHeader from "@/components/session-header";
 import moment from "moment";
-import useRefetch from "hooks/use-refetch";
 import type { StudySession, Flashcard, SessionStatus } from "@/types";
 
 const mockFlashcards: Flashcard[] = [
@@ -75,9 +74,28 @@ export default function StudySessionsPage() {
   const [reviewedCards, setReviewedCards] = useState(0);
 
   const { data, isPending } = api.session.getAllSessions.useQuery();
-  const updateStatusMutation = api.session.updateStatus.useMutation();
-
-  const refetch = useRefetch();
+  const trpcUtils = api.useUtils();
+  const updateStatusMutation = api.session.updateStatus.useMutation({
+    // Update the status of session quickly
+    onMutate: async ({ sessionId, updatedStatus }) => {
+      await trpcUtils.session.getAllSessions.cancel();
+      const prev = trpcUtils.session.getAllSessions.getData();
+      trpcUtils.session.getAllSessions.setData(undefined, (old) =>
+        old?.map((s) =>
+          s.id === sessionId ? { ...s, status: updatedStatus } : s,
+        ),
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      trpcUtils.session.getAllSessions.setData(undefined, ctx?.prev);
+    },
+    // Always refetch
+    onSettled: () => {
+      void trpcUtils.session.getAllSessions.invalidate();
+      void trpcUtils.session.sessionStats.invalidate();
+    },
+  });
 
   useEffect(() => {
     if (data) {
@@ -172,7 +190,6 @@ export default function StudySessionsPage() {
     setShowAnswer(false);
     setSessionProgress(0);
     setReviewedCards(0);
-    void refetch();
   };
 
   const handleCardRating = (rating: "easy" | "good" | "hard") => {

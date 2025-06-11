@@ -163,7 +163,7 @@ export function AppSidebar() {
               {quickActions.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Button onClick={}>
+                    <Button variant="outline">
                       <item.icon />
                       <span>{item.title}</span>
                     </Button>

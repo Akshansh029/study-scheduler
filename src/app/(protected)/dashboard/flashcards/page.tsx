@@ -47,6 +47,8 @@ import { toast } from "sonner";
 import moment from "moment";
 import { api } from "@/trpc/react";
 import FlashcardHeader from "@/components/flashcard-header";
+import useRefetch from "hooks/use-refetch";
+import { set } from "zod";
 
 // Types based on the schema
 interface Flashcard {
@@ -69,88 +71,9 @@ interface Subject {
   color: string;
 }
 
-// Mock data for development - replace with tRPC calls
-const mockSubjects: Subject[] = [
-  { id: "1", title: "Physics", color: "#2563EB" },
-  { id: "2", title: "Mathematics", color: "#059669" },
-  { id: "3", title: "Chemistry", color: "#7C3AED" },
-  { id: "4", title: "Biology", color: "#DC2626" },
-];
-
-const mockFlashcards: Flashcard[] = [
-  {
-    id: "1",
-    question: "What is Newton's First Law of Motion?",
-    answer:
-      "An object at rest stays at rest, and an object in motion stays in motion with the same speed and direction, unless acted upon by an external force.",
-    repetitionCount: 2,
-    easeFactor: 2.5,
-    interval: 3,
-    nextReviewDate: new Date(Date.now() - 86400000), // Yesterday
-    subjectId: "1",
-    subject: mockSubjects[0]!,
-    createdAt: new Date("2024-01-15"),
-    updatedAt: new Date("2024-01-20"),
-  },
-  {
-    id: "2",
-    question: "What is the derivative of sin(x)?",
-    answer: "cos(x)",
-    repetitionCount: 1,
-    easeFactor: 2.3,
-    interval: 1,
-    nextReviewDate: new Date(Date.now() + 86400000), // Tomorrow
-    subjectId: "2",
-    subject: mockSubjects[1]!,
-    createdAt: new Date("2024-01-16"),
-    updatedAt: new Date("2024-01-19"),
-  },
-  {
-    id: "3",
-    question: "What is the chemical formula for water?",
-    answer: "H₂O",
-    repetitionCount: 3,
-    easeFactor: 2.8,
-    interval: 7,
-    nextReviewDate: new Date(Date.now() + 3 * 86400000), // 3 days from now
-    subjectId: "3",
-    subject: mockSubjects[2]!,
-    createdAt: new Date("2024-01-10"),
-    updatedAt: new Date("2024-01-18"),
-  },
-  {
-    id: "4",
-    question: "What is the Pythagorean theorem?",
-    answer:
-      "In a right triangle, the square of the length of the hypotenuse equals the sum of the squares of the lengths of the other two sides. a² + b² = c²",
-    repetitionCount: 0,
-    easeFactor: 2.5,
-    interval: 1,
-    nextReviewDate: new Date(), // Today
-    subjectId: "2",
-    subject: mockSubjects[1]!,
-    createdAt: new Date("2024-01-17"),
-    updatedAt: new Date("2024-01-17"),
-  },
-  {
-    id: "5",
-    question: "What is the process of photosynthesis?",
-    answer:
-      "Photosynthesis is the process by which green plants and some other organisms use sunlight to synthesize foods with carbon dioxide and water, generating oxygen as a byproduct.",
-    repetitionCount: 1,
-    easeFactor: 2.2,
-    interval: 2,
-    nextReviewDate: new Date(Date.now() + 86400000), // Tomorrow
-    subjectId: "4",
-    subject: mockSubjects[3]!,
-    createdAt: new Date("2024-01-14"),
-    updatedAt: new Date("2024-01-21"),
-  },
-];
-
 export default function FlashcardsPage() {
   // State for flashcards and subjects
-  const [flashcards, setFlashcards] = useState<Flashcard[]>(mockFlashcards);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
 
   // State for search and filters
@@ -160,6 +83,8 @@ export default function FlashcardsPage() {
 
   // State for flashcard creation/editing
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [editingFlashcard, setEditingFlashcard] = useState<Flashcard | null>(
     null,
   );
@@ -169,14 +94,54 @@ export default function FlashcardsPage() {
     subjectId: "",
   });
 
-  const { data: subs } = api.subject.getSubjects.useQuery();
+  const refetch = useRefetch();
+
+  const createCardMutation = api.flashcard.create.useMutation({
+    onSuccess: () => {
+      toast.success("Flashcard created successfully");
+      void refetch();
+      resetForm();
+    },
+    onError: (error) => {
+      toast.error(`Failed to create flashcard: ${error.message}`);
+    },
+  });
+
+  const updateCardMutation = api.flashcard.update.useMutation({
+    onSuccess: () => {
+      toast.success("Flashcard updated successfully");
+      void refetch();
+      resetForm();
+    },
+    onError: (error) => {
+      toast.error(`Failed to update flashcard: ${error.message}`);
+    },
+  });
+
+  const deleteCardMutation = api.flashcard.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Flashcard deleted successfully");
+      void refetch();
+      setIsDeleteDialogOpen(false);
+      setSelectedCardId(null);
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete flashcard: ${error.message}`);
+    },
+  });
+
+  const { data: flashcardData } = api.flashcard.getAll.useQuery();
   useEffect(() => {
-    if (subs) {
-      setSubjects(subs);
-    } else {
-      setSubjects(mockSubjects);
+    if (flashcardData?.subjects) {
+      setSubjects(flashcardData.subjects);
     }
-  }, [subs]);
+  }, [flashcardData?.subjects]);
+
+  useEffect(() => {
+    if (flashcardData?.flashcards) {
+      setFlashcards(flashcardData.flashcards);
+    }
+  }, [flashcardData?.flashcards]);
 
   // Apply filters to flashcards
   const filteredFlashcards = flashcards.filter((card) => {
@@ -264,49 +229,32 @@ export default function FlashcardsPage() {
     }
 
     if (editingFlashcard) {
-      // Update existing flashcard
-      const updatedFlashcard = {
-        ...editingFlashcard,
+      // Update flashcard
+      updateCardMutation.mutate({
+        id: editingFlashcard.id,
         question: form.question,
         answer: form.answer,
         subjectId: form.subjectId,
-        subject: subjects.find((s) => s.id === form.subjectId)!,
-        updatedAt: new Date(),
-      };
-
-      setFlashcards((prev) =>
-        prev.map((card) =>
-          card.id === editingFlashcard.id ? updatedFlashcard : card,
-        ),
-      );
-      toast.success("Flashcard updated successfully");
+      });
     } else {
-      // Create new flashcard
-      const newFlashcard: Flashcard = {
-        id: Date.now().toString(),
+      // create flashcard
+      createCardMutation.mutate({
         question: form.question,
         answer: form.answer,
-        repetitionCount: 0,
-        easeFactor: 2.5,
-        interval: 1,
-        nextReviewDate: new Date(),
         subjectId: form.subjectId,
-        subject: subjects.find((s) => s.id === form.subjectId)!,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      setFlashcards((prev) => [...prev, newFlashcard]);
-      toast.success("Flashcard created successfully");
+      });
     }
 
     resetForm();
   }
 
-  function handleDeleteFlashcard(id: string) {
-    if (confirm("Are you sure you want to delete this flashcard?")) {
-      setFlashcards((prev) => prev.filter((card) => card.id !== id));
-      toast.success("Flashcard deleted successfully");
+  function deleteCard(cardId: string) {
+    if (selectedCardId !== cardId) return;
+    if (cardId) {
+      deleteCardMutation.mutate(cardId);
+    } else {
+      toast.error("No flashcard selected for deletion");
+      setSelectedCardId(null);
     }
   }
 
@@ -353,10 +301,8 @@ export default function FlashcardsPage() {
           </Button>
         </div>
       </header>
-
       {/* Stats Overview */}
       <FlashcardHeader />
-
       {/* Search and Filters */}
       <div className="px-6 pb-6">
         <Card>
@@ -410,7 +356,6 @@ export default function FlashcardsPage() {
           </CardContent>
         </Card>
       </div>
-
       {/* Flashcards List */}
       <div className="px-6 pb-6">
         <Card>
@@ -482,7 +427,7 @@ export default function FlashcardsPage() {
                                     key={card.id}
                                     className="transition-shadow hover:shadow-sm"
                                   >
-                                    <CardContent className="p-4">
+                                    <CardContent className="px-4">
                                       <div className="flex items-center justify-between">
                                         <div className="flex-1">
                                           <div className="mb-1 flex items-center gap-2">
@@ -514,9 +459,10 @@ export default function FlashcardsPage() {
                                           <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() =>
-                                              handleDeleteFlashcard(card.id)
-                                            }
+                                            onClick={() => {
+                                              setSelectedCardId(card.id);
+                                              setIsDeleteDialogOpen(true);
+                                            }}
                                           >
                                             <Trash2 className="h-4 w-4" />
                                           </Button>
@@ -583,7 +529,7 @@ export default function FlashcardsPage() {
                           key={card.id}
                           className="transition-shadow hover:shadow-sm"
                         >
-                          <CardContent className="p-4">
+                          <CardContent className="px-4">
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
                                 <div className="mb-1 flex items-center gap-2">
@@ -616,7 +562,10 @@ export default function FlashcardsPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleDeleteFlashcard(card.id)}
+                                  onClick={() => {
+                                    setSelectedCardId(card.id);
+                                    setIsDeleteDialogOpen(true);
+                                  }}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -640,7 +589,6 @@ export default function FlashcardsPage() {
           </CardContent>
         </Card>
       </div>
-
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => !open && resetForm()}>
         <DialogContent className="sm:max-w-lg">
@@ -702,15 +650,57 @@ export default function FlashcardsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={resetForm}>
+            <Button
+              variant="outline"
+              onClick={resetForm}
+              className="cursor-pointer"
+            >
               Cancel
             </Button>
-            <Button onClick={handleSaveFlashcard}>
+            <Button
+              onClick={handleSaveFlashcard}
+              className="cursor-pointer"
+              disabled={
+                createCardMutation.status === "pending" ||
+                updateCardMutation.status === "pending"
+              }
+            >
               {editingFlashcard ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Flashcard</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Are you sure you want to delete this flashcard? This action cannot
+            be undone.
+          </DialogDescription>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="destructive"
+              className="cursor-pointer"
+              onClick={() => {
+                deleteCard(selectedCardId!);
+              }}
+            >
+              Delete
+            </Button>
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      ;
     </div>
   );
 }

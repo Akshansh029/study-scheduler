@@ -12,6 +12,7 @@ export const flashcardRouter = createTRPCRouter({
     // Get all subjects for the user
     const subjects = await ctx.db.subject.findMany({
       where: { userId },
+      orderBy: { title: "asc" },
       select: {
         id: true,
         title: true,

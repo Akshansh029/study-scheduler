@@ -49,6 +49,7 @@ import { api } from "@/trpc/react";
 import FlashcardHeader from "@/components/flashcard-header";
 import useRefetch from "hooks/use-refetch";
 import { set } from "zod";
+import FadeLoader from "react-spinners/FadeLoader";
 
 // Types based on the schema
 interface Flashcard {
@@ -78,7 +79,7 @@ export default function FlashcardsPage() {
 
   // State for search and filters
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<string | null>("all");
   const [filterDueToday, setFilterDueToday] = useState(false);
 
   // State for flashcard creation/editing
@@ -130,7 +131,7 @@ export default function FlashcardsPage() {
     },
   });
 
-  const { data: flashcardData } = api.flashcard.getAll.useQuery();
+  const { data: flashcardData, isLoading } = api.flashcard.getAll.useQuery();
   useEffect(() => {
     if (flashcardData?.subjects) {
       setSubjects(flashcardData.subjects);
@@ -153,7 +154,9 @@ export default function FlashcardsPage() {
 
     // Subject filter
     const matchesSubject =
-      selectedSubject === null || card.subjectId === selectedSubject;
+      !selectedSubject ||
+      selectedSubject === "all" ||
+      card.subjectId === selectedSubject;
 
     // Due today filter
     const matchesDueToday =
@@ -357,156 +360,36 @@ export default function FlashcardsPage() {
         </Card>
       </div>
       {/* Flashcards List */}
-      <div className="px-6 pb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>My Flashcards</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="bySubject" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger
-                  value="bySubject"
-                  className="flex items-center gap-2"
-                >
-                  <BookOpen className="h-4 w-4" />
-                  By Subject
-                </TabsTrigger>
-                <TabsTrigger value="all" className="flex items-center gap-2">
-                  <Brain className="h-4 w-4" />
-                  All Flashcards
-                </TabsTrigger>
-              </TabsList>
+      {isLoading ? (
+        <div className="px-auto flex h-64 items-center justify-center">
+          <FadeLoader className="h-15 w-15" color="#a5a7a9" />
+        </div>
+      ) : (
+        <div className="px-6 pb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Flashcards</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="bySubject" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger
+                    value="bySubject"
+                    className="flex items-center gap-2"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    By Subject
+                  </TabsTrigger>
+                  <TabsTrigger value="all" className="flex items-center gap-2">
+                    <Brain className="h-4 w-4" />
+                    All Flashcards
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="bySubject" className="mt-6">
-                {Object.keys(flashcardsBySubject).length === 0 ? (
-                  <div className="py-12 text-center">
-                    <BookOpen className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-                    <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                      No flashcards found
-                    </h3>
-                    <p className="mb-6 text-gray-600">
-                      {searchQuery || selectedSubject || filterDueToday
-                        ? "Try adjusting your search or filters"
-                        : "Create your first flashcard to get started"}
-                    </p>
-                    <Button onClick={openCreateDialog}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Your First Flashcard
-                    </Button>
-                  </div>
-                ) : (
-                  <Accordion type="multiple" className="w-full">
-                    {subjects.map((subject) => {
-                      const subjectCards =
-                        flashcardsBySubject[subject.id] ?? [];
-                      if (subjectCards.length === 0) return null;
-
-                      return (
-                        <AccordionItem key={subject.id} value={subject.id}>
-                          <AccordionTrigger className="rounded-lg px-4 hover:bg-gray-50">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="h-4 w-4 rounded-full"
-                                style={{ backgroundColor: subject.color }}
-                              />
-                              <span>{subject.title}</span>
-                              <Badge variant="secondary" className="ml-2">
-                                {subjectCards.length}
-                              </Badge>
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <div className="space-y-3 pt-2">
-                              {subjectCards.map((card) => {
-                                const { status, icon, label } =
-                                  getFlashcardStatus(card);
-
-                                return (
-                                  <Card
-                                    key={card.id}
-                                    className="transition-shadow hover:shadow-sm"
-                                  >
-                                    <CardContent className="px-4">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex-1">
-                                          <div className="mb-1 flex items-center gap-2">
-                                            {icon}
-                                            <span className="text-xs text-gray-500">
-                                              {label}
-                                            </span>
-                                            {status === "due" && (
-                                              <Badge
-                                                variant="outline"
-                                                className="border-orange-200 bg-orange-50 text-xs text-orange-700"
-                                              >
-                                                Review Now
-                                              </Badge>
-                                            )}
-                                          </div>
-                                          <h3 className="font-medium text-gray-900">
-                                            {card.question}
-                                          </h3>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => openEditDialog(card)}
-                                          >
-                                            <Edit className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                              setSelectedCardId(card.id);
-                                              setIsDeleteDialogOpen(true);
-                                            }}
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            className="bg-indigo-600 hover:bg-indigo-700"
-                                          >
-                                            <Play className="mr-2 h-4 w-4" />
-                                            Practice
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-                                );
-                              })}
-                              <Button
-                                variant="outline"
-                                className="mt-2 w-full"
-                                onClick={() => {
-                                  setForm((prev) => ({
-                                    ...prev,
-                                    subjectId: subject.id,
-                                  }));
-                                  openCreateDialog();
-                                }}
-                              >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Flashcard to {subject.title}
-                              </Button>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      );
-                    })}
-                  </Accordion>
-                )}
-              </TabsContent>
-
-              <TabsContent value="all" className="mt-6">
-                <div className="space-y-3">
-                  {filteredFlashcards.length === 0 ? (
+                <TabsContent value="bySubject" className="mt-6">
+                  {Object.keys(flashcardsBySubject).length === 0 ? (
                     <div className="py-12 text-center">
-                      <Brain className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+                      <BookOpen className="mx-auto mb-4 h-16 w-16 text-gray-400" />
                       <h3 className="mb-2 text-lg font-semibold text-gray-900">
                         No flashcards found
                       </h3>
@@ -521,74 +404,203 @@ export default function FlashcardsPage() {
                       </Button>
                     </div>
                   ) : (
-                    filteredFlashcards.map((card) => {
-                      const { status, icon, label } = getFlashcardStatus(card);
+                    <Accordion type="multiple" className="w-full">
+                      {subjects.map((subject) => {
+                        const subjectCards =
+                          flashcardsBySubject[subject.id] ?? [];
+                        if (subjectCards.length === 0) return null;
 
-                      return (
-                        <Card
-                          key={card.id}
-                          className="transition-shadow hover:shadow-sm"
-                        >
-                          <CardContent className="px-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="mb-1 flex items-center gap-2">
-                                  <div
-                                    className="h-3 w-3 rounded-full"
-                                    style={{
-                                      backgroundColor: card.subject.color,
-                                    }}
-                                  />
-                                  <span className="text-xs text-gray-500">
-                                    {card.subject.title}
-                                  </span>
-                                  {icon}
-                                  <span className="text-xs text-gray-500">
-                                    {label}
-                                  </span>
-                                </div>
-                                <h3 className="font-medium text-gray-900">
-                                  {card.question}
-                                </h3>
+                        return (
+                          <AccordionItem key={subject.id} value={subject.id}>
+                            <AccordionTrigger className="rounded-lg px-4 hover:bg-gray-50">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="h-4 w-4 rounded-full"
+                                  style={{ backgroundColor: subject.color }}
+                                />
+                                <span>{subject.title}</span>
+                                <Badge variant="secondary" className="ml-2">
+                                  {subjectCards.length}
+                                </Badge>
                               </div>
-                              <div className="flex items-center gap-2">
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="space-y-3 pt-2">
+                                {subjectCards.map((card) => {
+                                  const { status, icon, label } =
+                                    getFlashcardStatus(card);
+
+                                  return (
+                                    <Card
+                                      key={card.id}
+                                      className="transition-shadow hover:shadow-sm"
+                                    >
+                                      <CardContent className="px-4">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex-1">
+                                            <div className="mb-1 flex items-center gap-2">
+                                              {icon}
+                                              <span className="text-xs text-gray-500">
+                                                {label}
+                                              </span>
+                                              {status === "due" && (
+                                                <Badge
+                                                  variant="outline"
+                                                  className="border-orange-200 bg-orange-50 text-xs text-orange-700"
+                                                >
+                                                  Review Now
+                                                </Badge>
+                                              )}
+                                            </div>
+                                            <h3 className="font-medium text-gray-900">
+                                              {card.question}
+                                            </h3>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() =>
+                                                openEditDialog(card)
+                                              }
+                                            >
+                                              <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => {
+                                                setSelectedCardId(card.id);
+                                                setIsDeleteDialogOpen(true);
+                                              }}
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              className="bg-indigo-600 hover:bg-indigo-700"
+                                            >
+                                              <Play className="mr-2 h-4 w-4" />
+                                              Practice
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  );
+                                })}
                                 <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openEditDialog(card)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="outline"
+                                  className="mt-2 w-full"
                                   onClick={() => {
-                                    setSelectedCardId(card.id);
-                                    setIsDeleteDialogOpen(true);
+                                    setForm((prev) => ({
+                                      ...prev,
+                                      subjectId: subject.id,
+                                    }));
+                                    openCreateDialog();
                                   }}
                                 >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  className="bg-indigo-600 hover:bg-indigo-700"
-                                >
-                                  <Play className="mr-2 h-4 w-4" />
-                                  Practice
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  Add Flashcard to {subject.title}
                                 </Button>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })
+                            </AccordionContent>
+                          </AccordionItem>
+                        );
+                      })}
+                    </Accordion>
                   )}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
+                </TabsContent>
+
+                <TabsContent value="all" className="mt-6">
+                  <div className="space-y-3">
+                    {filteredFlashcards.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <Brain className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+                        <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                          No flashcards found
+                        </h3>
+                        <p className="mb-6 text-gray-600">
+                          {searchQuery || selectedSubject || filterDueToday
+                            ? "Try adjusting your search or filters"
+                            : "Create your first flashcard to get started"}
+                        </p>
+                        <Button onClick={openCreateDialog}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create Your First Flashcard
+                        </Button>
+                      </div>
+                    ) : (
+                      filteredFlashcards.map((card) => {
+                        const { status, icon, label } =
+                          getFlashcardStatus(card);
+
+                        return (
+                          <Card
+                            key={card.id}
+                            className="transition-shadow hover:shadow-sm"
+                          >
+                            <CardContent className="px-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="mb-1 flex items-center gap-2">
+                                    <div
+                                      className="h-3 w-3 rounded-full"
+                                      style={{
+                                        backgroundColor: card.subject.color,
+                                      }}
+                                    />
+                                    <span className="text-xs text-gray-500">
+                                      {card.subject.title}
+                                    </span>
+                                    {icon}
+                                    <span className="text-xs text-gray-500">
+                                      {label}
+                                    </span>
+                                  </div>
+                                  <h3 className="font-medium text-gray-900">
+                                    {card.question}
+                                  </h3>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openEditDialog(card)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedCardId(card.id);
+                                      setIsDeleteDialogOpen(true);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="bg-indigo-600 hover:bg-indigo-700"
+                                  >
+                                    <Play className="mr-2 h-4 w-4" />
+                                    Practice
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => !open && resetForm()}>
         <DialogContent className="sm:max-w-lg">

@@ -27,6 +27,11 @@ export interface Flashcard {
   interval: number;
   repetitionCount: number;
   easeFactor: number;
+  subject: {
+    id: string;
+    title: string;
+    color: string;
+  };
 }
 
 export type RecType = "none" | "daily" | "weekly" | "monthly";

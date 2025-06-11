@@ -20,12 +20,10 @@ model User {
     imageUrl     String?
     // preferences  Json?
 
-    subjects Subject[] @relation("UserSubjects")
-    // sessions      StudySession[]
-    // reviews       ReviewLog[]
-    // EmailReminder EmailReminder[]
-
+    subjects Subject[]      @relation("UserSubjects")
     sessions StudySession[]
+    reviews  ReviewLog[]
+    // EmailReminder EmailReminder[]
 }
 
 // Subjects or topics a user studies
@@ -38,8 +36,8 @@ model Subject {
     user      User     @relation("UserSubjects", fields: [userId], references: [id])
     userId    String
 
-    // flashcards Flashcard[]
-    sessions StudySession[]
+    flashcards Flashcard[]
+    sessions   StudySession[]
 }
 
 // Scheduled study sessions
@@ -61,34 +59,34 @@ model StudySession {
 }
 
 // // Flashcards / active recall items
-// model Flashcard {
-//     id              String   @id @default(cuid())
-//     createdAt       DateTime @default(now())
-//     updatedAt       DateTime @updatedAt
-//     question        String
-//     answer          String
-//     repetitionCount Int      @default(0)
-//     easeFactor      Float    @default(2.5)
-//     interval        Int      @default(1) // in days
-//     nextReviewDate  DateTime @default(now())
+model Flashcard {
+    id              String   @id @default(cuid())
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+    question        String
+    answer          String
+    repetitionCount Int      @default(0)
+    easeFactor      Float    @default(2.5)
+    interval        Int      @default(1) // in days
+    nextReviewDate  DateTime @default(now())
 
-//     subject   Subject     @relation(fields: [subjectId], references: [id])
-//     subjectId String
-//     reviews   ReviewLog[]
-// }
+    subject   Subject     @relation(fields: [subjectId], references: [id])
+    subjectId String
+    reviews   ReviewLog[]
+}
 
 // // Logs of each review event
-// model ReviewLog {
-//     id         String   @id @default(cuid())
-//     createdAt  DateTime @default(now())
-//     reviewDate DateTime @default(now())
-//     quality    Int // 0-5 scale as per SM-2 algorithm
+model ReviewLog {
+    id         String   @id @default(cuid())
+    createdAt  DateTime @default(now())
+    reviewDate DateTime @default(now())
+    quality    Int // 0-5 scale as per SM-2 algorithm
 
-//     flashcard   Flashcard @relation(fields: [flashcardId], references: [id])
-//     flashcardId String
-//     user        User      @relation(fields: [userId], references: [id])
-//     userId      String
-// }
+    flashcard   Flashcard @relation(fields: [flashcardId], references: [id])
+    flashcardId String
+    user        User      @relation(fields: [userId], references: [id])
+    userId      String
+}
 
 // // Optional: Add EmailReminder model for scheduling notifications
 // model EmailReminder {

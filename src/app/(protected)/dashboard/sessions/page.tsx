@@ -414,18 +414,18 @@ export default function StudySessionsPage() {
                         Card {currentCardIndex + 1} of{" "}
                         {currentFlashcards.length}
                       </span>
-                      {/* <Badge variant="outline">
-                        {currentFlashcards[currentCardIndex].difficulty}
-                      </Badge> */}
+                      <Badge variant="outline">
+                        {currentFlashcards[currentCardIndex]?.difficulty}
+                      </Badge>
                     </div>
 
-                    {/* <div className="space-y-8">
+                    <div className="space-y-8">
                       <div>
                         <h3 className="mb-4 text-lg font-medium text-gray-900">
                           Question:
                         </h3>
                         <p className="text-xl leading-relaxed text-gray-800">
-                          {currentFlashcards[currentCardIndex].question}
+                          {currentFlashcards[currentCardIndex]?.question}
                         </p>
                       </div>
 
@@ -435,11 +435,11 @@ export default function StudySessionsPage() {
                             Answer:
                           </h3>
                           <p className="text-lg leading-relaxed text-gray-700">
-                            {currentFlashcards[currentCardIndex].answer}
+                            {currentFlashcards[currentCardIndex]?.answer}
                           </p>
                         </div>
                       )}
-                    </div> */}
+                    </div>
 
                     <div className="pt-8">
                       {!showAnswer ? (

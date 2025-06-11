@@ -10,6 +10,7 @@ import {
   User,
   Plus,
   Clock,
+  NotepadText,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -52,6 +53,12 @@ const mainItems = [
     title: "Sessions",
     url: "/dashboard/sessions",
     icon: Clock,
+    badge: null,
+  },
+  {
+    title: "Flashcard",
+    url: "/dashboard/flashcards",
+    icon: NotepadText,
     badge: null,
   },
   {

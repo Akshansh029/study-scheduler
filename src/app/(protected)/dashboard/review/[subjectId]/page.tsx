@@ -23,20 +23,43 @@ import { toast } from "sonner";
 import moment from "moment";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import type { Flashcard } from "@/types";
+
+// Types based on the Prisma schema
+interface Subject {
+  id: string;
+  title: string;
+  color: string;
+  userId: string;
+}
+
+interface Flashcard {
+  id: string;
+  question: string;
+  answer: string;
+  repetitionCount: number;
+  easeFactor: number;
+  interval: number;
+  nextReviewDate: Date;
+  subjectId: string;
+  userId: string;
+  subject: Subject;
+}
+
+interface ReviewLog {
+  id?: string;
+  createdAt?: Date;
+  reviewDate: Date;
+  quality: number;
+  flashcardId: string;
+  userId: string;
+}
 
 interface ReviewSession {
   totalCards: number;
   completedCards: number;
   correctAnswers: number;
   startTime: Date;
-  reviews: ReviewResult[];
-}
-
-interface ReviewResult {
-  flashcardId: string;
-  quality: number;
-  timeSpent: number;
+  reviews: ReviewLog[];
 }
 
 // Mock data for development - replace with tRPC calls
@@ -53,7 +76,8 @@ const mockFlashcardsBySubject: Record<string, Flashcard[]> = {
       interval: 3,
       nextReviewDate: new Date(Date.now() - 86400000),
       subjectId: "1",
-      subject: { id: "1", title: "Physics", color: "#2563EB" },
+      userId: "user1",
+      subject: { id: "1", title: "Physics", color: "#2563EB", userId: "user1" },
     },
     {
       id: "2",
@@ -64,7 +88,8 @@ const mockFlashcardsBySubject: Record<string, Flashcard[]> = {
       interval: 2,
       nextReviewDate: new Date(),
       subjectId: "1",
-      subject: { id: "1", title: "Physics", color: "#2563EB" },
+      userId: "user1",
+      subject: { id: "1", title: "Physics", color: "#2563EB", userId: "user1" },
     },
   ],
   "2": [
@@ -79,7 +104,13 @@ const mockFlashcardsBySubject: Record<string, Flashcard[]> = {
       interval: 1,
       nextReviewDate: new Date(),
       subjectId: "2",
-      subject: { id: "2", title: "Mathematics", color: "#059669" },
+      userId: "user1",
+      subject: {
+        id: "2",
+        title: "Mathematics",
+        color: "#059669",
+        userId: "user1",
+      },
     },
     {
       id: "4",
@@ -90,15 +121,22 @@ const mockFlashcardsBySubject: Record<string, Flashcard[]> = {
       interval: 7,
       nextReviewDate: new Date(Date.now() - 86400000),
       subjectId: "2",
-      subject: { id: "2", title: "Mathematics", color: "#059669" },
+      userId: "user1",
+      subject: {
+        id: "2",
+        title: "Mathematics",
+        color: "#059669",
+        userId: "user1",
+      },
     },
   ],
 };
 
 export default function SubjectReviewPage() {
   const params = useParams();
-  //   const router = useRouter();
+  const router = useRouter();
   const subjectId = params.subjectId as string;
+  const userId = "user1"; // In a real app, this would come from auth context
 
   // State for flashcards and review session
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -138,7 +176,6 @@ export default function SubjectReviewPage() {
         setLoading(false);
       } catch (error) {
         toast.error("Failed to load flashcards");
-        console.error("Error loading flashcards:", error);
         setLoading(false);
       }
     };
@@ -178,11 +215,12 @@ export default function SubjectReviewPage() {
 
     const timeSpent = moment().diff(moment(cardStartTime), "seconds");
 
-    // Create review result
-    const reviewResult: ReviewResult = {
-      flashcardId: currentCard.id,
+    // Create review log according to schema
+    const reviewLog: ReviewLog = {
+      reviewDate: new Date(),
       quality,
-      timeSpent,
+      flashcardId: currentCard.id,
+      userId,
     };
 
     // Update session state
@@ -190,7 +228,7 @@ export default function SubjectReviewPage() {
       ...reviewSession,
       completedCards: reviewSession.completedCards + 1,
       correctAnswers: reviewSession.correctAnswers + (quality >= 3 ? 1 : 0),
-      reviews: [...reviewSession.reviews, reviewResult],
+      reviews: [...reviewSession.reviews, reviewLog],
     };
     setReviewSession(updatedSession);
 
@@ -198,6 +236,7 @@ export default function SubjectReviewPage() {
     // await api.flashcard.recordReview.mutate({
     //   flashcardId: currentCard.id,
     //   quality,
+    //   userId,
     // })
 
     // Simulate API call delay

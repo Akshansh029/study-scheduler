@@ -23,45 +23,6 @@ import SessionHeader from "@/components/session-header";
 import moment from "moment";
 import type { StudySession, Flashcard, SessionStatus } from "@/types";
 
-const mockFlashcards: Flashcard[] = [
-  {
-    id: "1",
-    question: "What is the Schrödinger equation?",
-    answer:
-      "The Schrödinger equation is a linear partial differential equation that governs the wave function of a quantum-mechanical system. It is: iℏ ∂ψ/∂t = Ĥψ",
-    subjectId: "1",
-    difficulty: "hard",
-    nextReviewDate: new Date(),
-    interval: 1,
-    repetitionCount: 0,
-    easeFactor: 2.5,
-  },
-  {
-    id: "2",
-    question: "What is the uncertainty principle?",
-    answer:
-      "The uncertainty principle states that the position and momentum of a particle cannot both be precisely determined at the same time. Δx × Δp ≥ ℏ/2",
-    subjectId: "1",
-    difficulty: "medium",
-    nextReviewDate: new Date(),
-    interval: 1,
-    repetitionCount: 1,
-    easeFactor: 2.5,
-  },
-  {
-    id: "3",
-    question: "What is wave-particle duality?",
-    answer:
-      "Wave-particle duality is the concept that every particle or quantum entity may be described as either a particle or a wave, depending on the experimental setup.",
-    subjectId: "1",
-    difficulty: "easy",
-    nextReviewDate: new Date(),
-    interval: 3,
-    repetitionCount: 2,
-    easeFactor: 2.8,
-  },
-];
-
 export default function StudySessionsPage() {
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [activeSession, setActiveSession] = useState<StudySession | null>(null);
@@ -152,10 +113,10 @@ export default function StudySessionsPage() {
     void handleStatusUpdate(session.id, "in-progress");
 
     // Load flashcards for this subject
-    const subjectCards = mockFlashcards.filter(
-      (card) => card.subjectId === session.subjectId,
-    );
-    setCurrentFlashcards(subjectCards);
+    // const subjectCards = mockFlashcards.filter(
+    //   (card) => card.subjectId === session.subjectId,
+    // );
+    // setCurrentFlashcards(subjectCards);
     setCurrentCardIndex(0);
     setShowAnswer(false);
     setSessionTimer(0);
@@ -300,6 +261,13 @@ export default function StudySessionsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                    {sessions.length === 0 && (
+                      <div className="flex w-full justify-center">
+                        <p className="mx-auto text-gray-500">
+                          No sessions scheduled
+                        </p>
+                      </div>
+                    )}
                     {sessions.map((session) => {
                       const status = calculateStatus(session);
                       return (

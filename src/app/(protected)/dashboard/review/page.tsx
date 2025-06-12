@@ -11,23 +11,7 @@ import { api } from "@/trpc/react";
 import TopHeader from "@/components/TopHeader";
 import FadeLoader from "react-spinners/FadeLoader";
 import ReviewHeader from "@/components/review-header";
-
-interface ReviewFlashcard {
-  id: string;
-  question: string;
-  answer: string;
-  repetitionCount: number;
-  easeFactor: number;
-  nextReviewDate: Date;
-  interval: number;
-}
-
-interface SubjectWithCards {
-  id: string;
-  title: string;
-  color: string;
-  flashcards: ReviewFlashcard[];
-}
+import type { SubjectWithCards } from "@/types";
 
 export default function ReviewPage() {
   const [subjectStats, setSubjectStats] = useState<SubjectWithCards[]>([]);
@@ -40,24 +24,10 @@ export default function ReviewPage() {
     }
   }, [subjectWithCards]);
 
-  const totalDue = subjectStats.reduce(
-    (sum, subject) => sum + subject.flashcards.length,
-    0,
-  );
-
-  const totalCards = subjectStats.reduce(
-    (sum, subject) => sum + subject.flashcards.length,
-    0,
-  );
-
-  const subjectsWithDueCards = subjectStats.filter(
-    (subject) => subject.flashcards.length > 0,
-  );
-
   function isSubjectOverdue(subject: SubjectWithCards): boolean {
     const now = new Date();
 
-    // Get the earliest nextReviewDate among flashcards
+    // Earliest nextReviewDate for flashcards
     const minNextReviewDate = subject.flashcards.reduce<Date | null>(
       (min, card) => {
         if (!min || card.nextReviewDate < min) {
@@ -69,6 +39,24 @@ export default function ReviewPage() {
     );
     return minNextReviewDate !== null && minNextReviewDate < now;
   }
+
+  // Due cards
+  const totalDue = subjectWithCards?.reduce((sum, subject) => {
+    const dueCardsCount = subject.flashcards.filter(
+      (card) => new Date(card.nextReviewDate) <= new Date(),
+    ).length;
+    return sum + dueCardsCount;
+  }, 0);
+
+  const totalCards = subjectWithCards?.reduce(
+    (sum, subject) => sum + subject.flashcards.length,
+    0,
+  );
+
+  // subject with due cards
+  const subjectsWithDueCards = subjectWithCards?.filter((subject) =>
+    isSubjectOverdue(subject),
+  );
 
   function getEarliestNextReviewDate(subject: SubjectWithCards): string | null {
     if (subject.flashcards.length === 0) return null;
@@ -91,9 +79,13 @@ export default function ReviewPage() {
           subtitle="Active recall practice with spaced repetition"
         />
 
-        <div className="p-6">
+        <div className="p-4">
+          <ReviewHeader />
+        </div>
+
+        <div className="p-2">
           <Card className="mx-auto max-w-2xl">
-            <CardContent className="p-12 text-center">
+            <CardContent className="p-6 text-center">
               <Trophy className="mx-auto mb-4 h-16 w-16 text-green-500" />
               <h3 className="mb-2 text-xl font-semibold text-gray-900">
                 All caught up!
@@ -121,10 +113,6 @@ export default function ReviewPage() {
                     <div className="text-purple-700">{totalCards}</div>
                   </div>
                 </div>
-                <Button className="bg-indigo-600 hover:bg-indigo-700">
-                  <Brain className="mr-2 h-4 w-4" />
-                  Practice Random Cards
-                </Button>
               </div>
             </CardContent>
           </Card>
@@ -154,7 +142,7 @@ export default function ReviewPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {subjectsWithDueCards.length === 0 && !isLoading ? (
+                {subjectsWithDueCards?.length === 0 && !isLoading ? (
                   <div className="py-12 text-center">
                     <Brain className="mx-auto mb-4 h-16 w-16 text-gray-400" />
                     <h3 className="mb-2 text-lg font-semibold text-gray-900">

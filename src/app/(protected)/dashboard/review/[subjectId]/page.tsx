@@ -24,6 +24,8 @@ import moment from "moment";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
+import TopHeader from "@/components/TopHeader";
+import ReviewHeader from "@/components/review-header";
 
 interface ReviewLog {
   id?: string;
@@ -217,27 +219,13 @@ export default function SubjectReviewPage() {
     );
   }
 
-  // FIXED: Check for dueCards instead of all flashcards
   if (dueCards.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <header className="border-b bg-white px-6 py-4">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger />
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard/review">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Reviews
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">No Cards Due</h1>
-              <p className="text-gray-600">
-                This subject has no cards due for review
-              </p>
-            </div>
-          </div>
-        </header>
+        <TopHeader
+          title="Review"
+          subtitle="Active recall practice with spaced repetition"
+        />
         <div className="p-6">
           <Card className="mx-auto max-w-2xl">
             <CardContent className="p-12 text-center">

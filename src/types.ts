@@ -59,10 +59,6 @@ export interface Subject {
   createdAt: Date;
   updatedAt: Date;
   userId: string;
-  // Additional computed fields for display
-  // cardCount?: number;
-  // lastStudied?: Date;
-  // nextReview?: Date;
 }
 
 export type FormInput = {
@@ -90,4 +86,21 @@ export interface RRuleConfig {
   freq: string;
   dtstart: Date | string;
   until?: Date | string;
+}
+
+export interface ReviewFlashcard {
+  id: string;
+  question: string;
+  answer: string;
+  repetitionCount: number;
+  easeFactor: number;
+  nextReviewDate: Date;
+  interval: number;
+}
+
+export interface SubjectWithCards {
+  id: string;
+  title: string;
+  color: string;
+  flashcards: ReviewFlashcard[];
 }

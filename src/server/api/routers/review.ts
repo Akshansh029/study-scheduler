@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 export const reviewRouter = createTRPCRouter({
-  getSubjectCards: protectedProcedure.query(async ({ ctx }) => {
+  getSubjectWithCards: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.userId;
     if (!userId) {
       throw new Error("User not authenticated");
@@ -24,6 +24,7 @@ export const reviewRouter = createTRPCRouter({
             repetitionCount: true,
             easeFactor: true,
             nextReviewDate: true,
+            interval: true,
           },
           orderBy: {
             nextReviewDate: "asc",
@@ -34,6 +35,46 @@ export const reviewRouter = createTRPCRouter({
 
     return subjects.filter((subject) => subject.flashcards.length > 0);
   }),
+
+  getCardsPerSubject: protectedProcedure
+    .input(
+      z.object({
+        subjectId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.user.userId;
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
+      const flashcards = await ctx.db.flashcard.findMany({
+        where: {
+          subjectId: input.subjectId,
+        },
+        select: {
+          id: true,
+          question: true,
+          answer: true,
+          repetitionCount: true,
+          easeFactor: true,
+          nextReviewDate: true,
+          interval: true,
+          subjectId: true,
+          userId: true,
+          subject: {
+            select: {
+              id: true,
+              title: true,
+              color: true,
+              userId: true,
+            },
+          },
+        },
+      });
+
+      return flashcards;
+    }),
 
   recordReview: protectedProcedure
     .input(

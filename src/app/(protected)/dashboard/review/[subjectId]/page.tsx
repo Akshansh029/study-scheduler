@@ -23,27 +23,7 @@ import { toast } from "sonner";
 import moment from "moment";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-
-// Types based on the Prisma schema
-interface Subject {
-  id: string;
-  title: string;
-  color: string;
-  userId: string;
-}
-
-interface Flashcard {
-  id: string;
-  question: string;
-  answer: string;
-  repetitionCount: number;
-  easeFactor: number;
-  interval: number;
-  nextReviewDate: Date;
-  subjectId: string;
-  userId: string;
-  subject: Subject;
-}
+import { api } from "@/trpc/react";
 
 interface ReviewLog {
   id?: string;
@@ -62,84 +42,12 @@ interface ReviewSession {
   reviews: ReviewLog[];
 }
 
-// Mock data for development - replace with tRPC calls
-const mockFlashcardsBySubject: Record<string, Flashcard[]> = {
-  "1": [
-    // Physics
-    {
-      id: "1",
-      question: "What is Newton's First Law of Motion?",
-      answer:
-        "An object at rest stays at rest, and an object in motion stays in motion with the same speed and direction, unless acted upon by an external force.",
-      repetitionCount: 2,
-      easeFactor: 2.5,
-      interval: 3,
-      nextReviewDate: new Date(Date.now() - 86400000),
-      subjectId: "1",
-      userId: "user1",
-      subject: { id: "1", title: "Physics", color: "#2563EB", userId: "user1" },
-    },
-    {
-      id: "2",
-      question: "What is the formula for kinetic energy?",
-      answer: "KE = ½mv², where m is mass and v is velocity",
-      repetitionCount: 1,
-      easeFactor: 2.3,
-      interval: 2,
-      nextReviewDate: new Date(),
-      subjectId: "1",
-      userId: "user1",
-      subject: { id: "1", title: "Physics", color: "#2563EB", userId: "user1" },
-    },
-  ],
-  "2": [
-    // Mathematics
-    {
-      id: "3",
-      question: "What is the Pythagorean theorem?",
-      answer:
-        "In a right triangle, the square of the length of the hypotenuse equals the sum of the squares of the lengths of the other two sides. a² + b² = c²",
-      repetitionCount: 0,
-      easeFactor: 2.5,
-      interval: 1,
-      nextReviewDate: new Date(),
-      subjectId: "2",
-      userId: "user1",
-      subject: {
-        id: "2",
-        title: "Mathematics",
-        color: "#059669",
-        userId: "user1",
-      },
-    },
-    {
-      id: "4",
-      question: "What is the derivative of sin(x)?",
-      answer: "cos(x)",
-      repetitionCount: 3,
-      easeFactor: 2.8,
-      interval: 7,
-      nextReviewDate: new Date(Date.now() - 86400000),
-      subjectId: "2",
-      userId: "user1",
-      subject: {
-        id: "2",
-        title: "Mathematics",
-        color: "#059669",
-        userId: "user1",
-      },
-    },
-  ],
-};
-
 export default function SubjectReviewPage() {
   const params = useParams();
-  const router = useRouter();
   const subjectId = params.subjectId as string;
   const userId = "user1"; // In a real app, this would come from auth context
 
   // State for flashcards and review session
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [reviewSession, setReviewSession] = useState<ReviewSession | null>(
@@ -147,73 +55,73 @@ export default function SubjectReviewPage() {
   );
   const [cardStartTime, setCardStartTime] = useState<Date>(new Date());
   const [sessionComplete, setSessionComplete] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  // Load flashcards for this subject
+  const {
+    data: flashcardsData,
+    isLoading,
+    error,
+  } = api.review.getCardsPerSubject.useQuery({
+    subjectId,
+  });
+
+  const flashcards = flashcardsData ?? [];
+
+  const dueCards = flashcards.filter((card) =>
+    moment(card.nextReviewDate).isSameOrBefore(moment(), "day"),
+  );
+
+  // Initialize review session when flashcards are loaded
   useEffect(() => {
-    const loadFlashcards = async () => {
-      try {
-        // TODO: Replace with tRPC call
-        // const result = await api.flashcard.getDueBySubject.query({ subjectId })
+    if (flashcardsData && !reviewSession && dueCards.length > 0) {
+      setReviewSession({
+        totalCards: dueCards.length,
+        completedCards: 0,
+        correctAnswers: 0,
+        startTime: new Date(),
+        reviews: [],
+      });
+    }
+  }, [flashcardsData, reviewSession, dueCards.length]);
 
-        const subjectFlashcards = mockFlashcardsBySubject[subjectId] ?? [];
-        const dueCards = subjectFlashcards.filter((card) =>
-          moment(card.nextReviewDate).isSameOrBefore(moment(), "day"),
-        );
-
-        setFlashcards(dueCards);
-
-        if (dueCards.length > 0) {
-          setReviewSession({
-            totalCards: dueCards.length,
-            completedCards: 0,
-            correctAnswers: 0,
-            startTime: new Date(),
-            reviews: [],
-          });
-        }
-
-        setLoading(false);
-      } catch (error) {
-        toast.error("Failed to load flashcards");
-        setLoading(false);
-      }
-    };
-
-    void loadFlashcards();
-  }, [subjectId]);
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load flashcards");
+    }
+  }, [error]);
 
   // Reset card start time when moving to next card
   useEffect(() => {
     setCardStartTime(new Date());
   }, [currentCardIndex]);
 
-  // Calculate session stats
+  // FIXED: Use dueCards instead of all flashcards for calculations
   const progress =
-    flashcards.length > 0 && reviewSession
-      ? (reviewSession.completedCards / flashcards.length) * 100
+    dueCards.length > 0 && reviewSession
+      ? (reviewSession.completedCards / dueCards.length) * 100
       : 0;
+
   const accuracy =
     reviewSession && reviewSession.completedCards > 0
       ? (reviewSession.correctAnswers / reviewSession.completedCards) * 100
       : 0;
+
   const sessionDuration = reviewSession
     ? moment().diff(moment(reviewSession.startTime), "minutes")
     : 0;
+
   const averageTimePerCard =
     reviewSession && reviewSession.completedCards > 0
       ? sessionDuration / reviewSession.completedCards
       : 0;
 
-  // Get current flashcard
-  const currentCard = flashcards[currentCardIndex];
+  // FIXED: Get current flashcard from dueCards instead of all flashcards
+  const currentCard = dueCards[currentCardIndex];
   const subject = currentCard?.subject;
 
   // Handle rating a flashcard
   const handleRating = async (quality: number) => {
     if (!currentCard || !reviewSession) return;
-
-    const timeSpent = moment().diff(moment(cardStartTime), "seconds");
 
     // Create review log according to schema
     const reviewLog: ReviewLog = {
@@ -242,8 +150,8 @@ export default function SubjectReviewPage() {
     // Simulate API call delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Move to next card or complete session
-    if (currentCardIndex < flashcards.length - 1) {
+    // FIXED: Move to next card or complete session based on dueCards
+    if (currentCardIndex < dueCards.length - 1) {
       setCurrentCardIndex(currentCardIndex + 1);
       setShowAnswer(false);
       toast.success("Review recorded!");
@@ -285,7 +193,7 @@ export default function SubjectReviewPage() {
     },
   ];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="border-b bg-white px-6 py-4">
@@ -312,7 +220,8 @@ export default function SubjectReviewPage() {
     );
   }
 
-  if (flashcards.length === 0) {
+  // FIXED: Check for dueCards instead of all flashcards
+  if (dueCards.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="border-b bg-white px-6 py-4">
@@ -470,7 +379,7 @@ export default function SubjectReviewPage() {
                   setShowAnswer(false);
                   setSessionComplete(false);
                   setReviewSession({
-                    totalCards: flashcards.length,
+                    totalCards: dueCards.length,
                     completedCards: 0,
                     correctAnswers: 0,
                     startTime: new Date(),
@@ -512,7 +421,7 @@ export default function SubjectReviewPage() {
                 {subject?.title} Review
               </h1>
               <p className="text-gray-600">
-                Card {currentCardIndex + 1} of {flashcards.length}
+                Card {currentCardIndex + 1} of {dueCards.length}
               </p>
             </div>
           </div>
@@ -591,7 +500,7 @@ export default function SubjectReviewPage() {
                       <Button
                         onClick={() => setShowAnswer(true)}
                         size="lg"
-                        className="px-8"
+                        className="cursor-pointer px-8"
                       >
                         Show Answer
                         <ArrowRight className="ml-2 h-4 w-4" />
@@ -648,11 +557,11 @@ export default function SubjectReviewPage() {
               <CardContent>
                 <div className="text-2xl font-bold">
                   {reviewSession
-                    ? flashcards.length - reviewSession.completedCards
-                    : flashcards.length}
+                    ? dueCards.length - reviewSession.completedCards
+                    : dueCards.length}
                 </div>
                 <p className="text-muted-foreground text-xs">
-                  {reviewSession?.completedCards ?? 0} of {flashcards.length}{" "}
+                  {reviewSession?.completedCards ?? 0} of {dueCards.length}{" "}
                   completed
                 </p>
               </CardContent>

@@ -6,7 +6,7 @@ import { api } from "@/trpc/react";
 
 const ReviewHeader = () => {
   const { data: subjectWithCards, isLoading } =
-    api.review.getSubjectCards.useQuery();
+    api.review.getSubjectWithCards.useQuery();
 
   const totalDue = subjectWithCards?.reduce(
     (sum, subject) => sum + subject.flashcards.length,

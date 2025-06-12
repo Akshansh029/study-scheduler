@@ -19,6 +19,7 @@ interface ReviewFlashcard {
   repetitionCount: number;
   easeFactor: number;
   nextReviewDate: Date;
+  interval: number;
 }
 
 interface SubjectWithCards {
@@ -32,7 +33,7 @@ export default function ReviewPage() {
   const [subjectStats, setSubjectStats] = useState<SubjectWithCards[]>([]);
 
   const { data: subjectWithCards, isLoading } =
-    api.review.getSubjectCards.useQuery();
+    api.review.getSubjectWithCards.useQuery();
   useEffect(() => {
     if (subjectWithCards) {
       setSubjectStats(subjectWithCards);

@@ -64,6 +64,8 @@ export default function SubjectReviewPage() {
     subjectId,
   });
 
+  const recordReviewMutation = api.review.recordReview.useMutation();
+
   const flashcards = flashcardsData ?? [];
 
   const dueCards = flashcards.filter((card) =>
@@ -140,15 +142,10 @@ export default function SubjectReviewPage() {
     };
     setReviewSession(updatedSession);
 
-    // TODO: Call tRPC mutation to record review
-    // await api.flashcard.recordReview.mutate({
-    //   flashcardId: currentCard.id,
-    //   quality,
-    //   userId,
-    // })
-
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    recordReviewMutation.mutate({
+      flashcardId: currentCard.id,
+      quality,
+    });
 
     // FIXED: Move to next card or complete session based on dueCards
     if (currentCardIndex < dueCards.length - 1) {
@@ -161,7 +158,7 @@ export default function SubjectReviewPage() {
     }
   };
 
-  // Rating options with colors and descriptions
+  // Rating options
   const ratingOptions = [
     {
       quality: 0,
@@ -527,15 +524,6 @@ export default function SubjectReviewPage() {
                               </span>
                             </Button>
                           ))}
-                        </div>
-                        <div className="mx-auto max-w-2xl text-sm text-gray-500">
-                          <p>
-                            <strong>Again:</strong> You forgot completely •{" "}
-                            <strong>Hard:</strong> You remembered with
-                            difficulty • <strong>Good:</strong> You remembered
-                            after thinking • <strong>Easy:</strong> You knew it
-                            instantly
-                          </p>
                         </div>
                       </div>
                     )}

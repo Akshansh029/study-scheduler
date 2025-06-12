@@ -5,34 +5,23 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import {
-  Play,
-  Pause,
-  Square,
-  CheckCircle,
-  XCircle,
-  RotateCcw,
-  BookOpen,
-  ArrowRight,
-} from "lucide-react";
+import { Play, Pause, Square, Brain, Clock, Target } from "lucide-react";
 import { api } from "@/trpc/react";
 import { toast } from "sonner";
 import SessionHeader from "@/components/session-header";
 import moment from "moment";
-import type { StudySession, Flashcard, SessionStatus } from "@/types";
+import type { StudySession, SessionStatus } from "@/types";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function StudySessionsPage() {
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [activeSession, setActiveSession] = useState<StudySession | null>(null);
   const [sessionTimer, setSessionTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [currentFlashcards, setCurrentFlashcards] = useState<Flashcard[]>([]);
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [sessionProgress, setSessionProgress] = useState(0);
-  const [reviewedCards, setReviewedCards] = useState(0);
+
+  const router = useRouter();
 
   const { data, isPending } = api.session.getAllSessions.useQuery();
   const trpcUtils = api.useUtils();
@@ -112,17 +101,8 @@ export default function StudySessionsPage() {
     // Update status in database
     void handleStatusUpdate(session.id, "in-progress");
 
-    // Load flashcards for this subject
-    // const subjectCards = mockFlashcards.filter(
-    //   (card) => card.subjectId === session.subjectId,
-    // );
-    // setCurrentFlashcards(subjectCards);
-    setCurrentCardIndex(0);
-    setShowAnswer(false);
     setSessionTimer(0);
     setIsTimerRunning(true);
-    setSessionProgress(0);
-    setReviewedCards(0);
   };
 
   const pauseSession = () => {
@@ -146,28 +126,6 @@ export default function StudySessionsPage() {
     setActiveSession(null);
     setIsTimerRunning(false);
     setSessionTimer(0);
-    setCurrentFlashcards([]);
-    setCurrentCardIndex(0);
-    setShowAnswer(false);
-    setSessionProgress(0);
-    setReviewedCards(0);
-  };
-
-  const handleCardRating = (rating: "easy" | "good" | "hard") => {
-    if (currentFlashcards?.length === 0) return;
-
-    // Update progress
-    const newReviewedCards = reviewedCards + 1;
-    setReviewedCards(newReviewedCards);
-    setSessionProgress((newReviewedCards / currentFlashcards.length) * 100);
-
-    // Move to next card
-    if (currentCardIndex < currentFlashcards.length - 1) {
-      setCurrentCardIndex(currentCardIndex + 1);
-      setShowAnswer(false);
-    } else {
-      endSession();
-    }
   };
 
   const formatTime = (seconds: number) => {
@@ -246,7 +204,6 @@ export default function StudySessionsPage() {
       <div className="p-6">
         {!activeSession ? (
           <>
-            {/* Stats Overview */}
             <SessionHeader />
 
             {/* Session List */}
@@ -317,9 +274,15 @@ export default function StudySessionsPage() {
                               <div className="flex items-center gap-4">
                                 {getStatusBadge(status)}
                                 <Button
-                                  onClick={() => startSession(session)}
+                                  // href={`/dashboard/sessions/${session.id}`}
+                                  // onClick={() => startSession(session)}
+                                  onClick={() => {
+                                    router.push(
+                                      `/dashboard/sessions/${session.id}`,
+                                    );
+                                  }}
                                   disabled={session.status === "completed"}
-                                  className="cursor-pointer bg-indigo-600 hover:bg-indigo-700"
+                                  className="flex cursor-pointer items-center rounded-md bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-700"
                                 >
                                   <Play className="mr-2 h-4 w-4" />
                                   Start Session
@@ -345,6 +308,7 @@ export default function StudySessionsPage() {
         ) : (
           /* Active Session */
           <div className="mx-auto max-w-4xl space-y-6">
+            {/* Session Header */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -363,133 +327,122 @@ export default function StudySessionsPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-mono text-2xl font-bold">
+                    <div className="font-mono text-3xl font-bold text-indigo-600">
                       {formatTime(sessionTimer)}
                     </div>
-                    <p className="text-sm text-gray-600">Session time</p>
+                    <p className="text-sm text-gray-600">Study time</p>
                   </div>
                 </div>
               </CardHeader>
             </Card>
 
-            {/* Progress */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-indigo-600" />
-                    <span className="font-medium">Progress</span>
+            {/* Ambient Study Environment */}
+            <Card className="min-h-[500px] bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+              <CardContent className="p-12">
+                <div className="space-y-8 text-center">
+                  {/* Animated Study Illustration */}
+                  <div className="relative mx-auto mb-8 h-64 w-64">
+                    <div className="absolute inset-0 animate-pulse rounded-full bg-gradient-to-r from-blue-400 to-purple-500 opacity-20"></div>
+                    <div
+                      className="absolute inset-4 animate-pulse rounded-full bg-gradient-to-r from-indigo-400 to-blue-500 opacity-30"
+                      style={{ animationDelay: "1s" }}
+                    ></div>
+                    <div
+                      className="absolute inset-8 animate-pulse rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 opacity-40"
+                      style={{ animationDelay: "2s" }}
+                    ></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Brain
+                        className="h-24 w-24 animate-bounce text-indigo-600"
+                        style={{ animationDuration: "3s" }}
+                      />
+                    </div>
                   </div>
-                  <span className="text-sm text-gray-600">
-                    {reviewedCards} of {currentFlashcards.length} cards
-                  </span>
+
+                  {/* Encouraging Message */}
+                  <div className="space-y-4">
+                    <h2 className="text-3xl font-bold text-gray-800">
+                      You&apos;re in the Zone! 🧠
+                    </h2>
+                    <p className="mx-auto max-w-2xl text-xl leading-relaxed text-gray-600">
+                      Deep focus mode activated. Your mind is absorbing
+                      knowledge and building lasting memories. Keep up the
+                      excellent work!
+                    </p>
+                  </div>
+
+                  {/* Study Stats in Ambient Style */}
+                  <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <div className="rounded-2xl border border-white/20 bg-white/60 p-6 backdrop-blur-sm">
+                      <div className="mb-3 flex items-center justify-center">
+                        <Clock className="h-8 w-8 text-blue-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-gray-800">
+                        {formatTime(sessionTimer)}
+                      </div>
+                      <div className="text-sm text-gray-600">Time Invested</div>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/20 bg-white/60 p-6 backdrop-blur-sm">
+                      <div className="mb-3 flex items-center justify-center">
+                        <Target className="h-8 w-8 text-indigo-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-gray-800">
+                        {activeSession.subject.title}
+                      </div>
+                      <div className="text-sm text-gray-600">Current Focus</div>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/20 bg-white/60 p-6 backdrop-blur-sm">
+                      <div className="mb-3 flex items-center justify-center">
+                        <Brain className="h-8 w-8 text-purple-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-gray-800">
+                        Active
+                      </div>
+                      <div className="text-sm text-gray-600">Learning Mode</div>
+                    </div>
+                  </div>
+
+                  {/* Breathing Animation for Focus */}
+                  <div className="mt-8">
+                    <p className="mb-4 text-sm text-gray-600">
+                      Take a deep breath and stay focused
+                    </p>
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-4 border-indigo-200">
+                      <div className="h-8 w-8 animate-ping rounded-full bg-indigo-400 opacity-75"></div>
+                    </div>
+                  </div>
                 </div>
-                <Progress value={sessionProgress} className="h-2" />
               </CardContent>
             </Card>
 
-            {/* Flashcard Interface */}
-            {currentFlashcards.length > 0 &&
-            currentCardIndex < currentFlashcards.length ? (
-              <Card className="min-h-[400px]">
-                <CardContent className="p-8">
-                  <div className="space-y-6 text-center">
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>
-                        Card {currentCardIndex + 1} of{" "}
-                        {currentFlashcards.length}
-                      </span>
-                      <Badge variant="outline">
-                        {currentFlashcards[currentCardIndex]?.difficulty}
-                      </Badge>
+            {/* Session Controls */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-center space-x-4">
+                  <div className="text-center">
+                    <div className="mb-2 text-sm text-gray-600">
+                      Session Duration
                     </div>
-
-                    <div className="space-y-8">
-                      <div>
-                        <h3 className="mb-4 text-lg font-medium text-gray-900">
-                          Question:
-                        </h3>
-                        <p className="text-xl leading-relaxed text-gray-800">
-                          {currentFlashcards[currentCardIndex]?.question}
-                        </p>
-                      </div>
-
-                      {showAnswer && (
-                        <div className="border-t pt-8">
-                          <h3 className="mb-4 text-lg font-medium text-gray-900">
-                            Answer:
-                          </h3>
-                          <p className="text-lg leading-relaxed text-gray-700">
-                            {currentFlashcards[currentCardIndex]?.answer}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="pt-8">
-                      {!showAnswer ? (
-                        <Button
-                          onClick={() => setShowAnswer(true)}
-                          size="lg"
-                          className="px-8"
-                        >
-                          Show Answer
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <div className="space-y-4">
-                          <p className="text-sm text-gray-600">
-                            How well did you know this?
-                          </p>
-                          <div className="flex justify-center gap-4">
-                            <Button
-                              variant="outline"
-                              onClick={() => handleCardRating("hard")}
-                              className="flex items-center gap-2"
-                            >
-                              <XCircle className="h-4 w-4 text-red-500" />
-                              Hard
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => handleCardRating("good")}
-                              className="flex items-center gap-2"
-                            >
-                              <RotateCcw className="h-4 w-4 text-yellow-500" />
-                              Good
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => handleCardRating("easy")}
-                              className="flex items-center gap-2"
-                            >
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                              Easy
-                            </Button>
-                          </div>
-                        </div>
-                      )}
+                    <div className="text-lg font-semibold">
+                      {formatTime(sessionTimer)}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-500" />
-                  <h3 className="mb-2 text-xl font-semibold text-gray-900">
-                    Session Complete!
-                  </h3>
-                  <p className="mb-6 text-gray-600">
-                    You&apos;ve reviewed all {currentFlashcards.length} cards in{" "}
-                    {formatTime(sessionTimer)}.
-                  </p>
-                  <Button onClick={endSession} size="lg">
-                    Finish Session
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+                  <div className="mx-6 h-8 w-px bg-gray-300"></div>
+                  <div className="text-center">
+                    <div className="mb-2 text-sm text-gray-600">Subject</div>
+                    <div className="flex items-center gap-2 text-lg font-semibold">
+                      <div
+                        className="h-4 w-4 rounded-full"
+                        style={{ backgroundColor: activeSession.subject.color }}
+                      ></div>
+                      {activeSession.subject.title}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

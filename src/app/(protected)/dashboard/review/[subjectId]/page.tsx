@@ -47,7 +47,6 @@ interface ReviewSession {
 export default function SubjectReviewPage() {
   const params = useParams();
   const subjectId = params.subjectId as string;
-  const userId = "user1"; // In a real app, this would come from auth context
 
   // State for flashcards and review session
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -58,6 +57,7 @@ export default function SubjectReviewPage() {
   const [cardStartTime, setCardStartTime] = useState<Date>(new Date());
   const [sessionComplete, setSessionComplete] = useState(false);
 
+  const { data: userData } = api.subject.getUser.useQuery();
   const {
     data: flashcardsData,
     isLoading,
@@ -119,7 +119,6 @@ export default function SubjectReviewPage() {
       ? sessionDuration / reviewSession.completedCards
       : 0;
 
-  // FIXED: Get current flashcard from dueCards instead of all flashcards
   const currentCard = dueCards[currentCardIndex];
   const subject = currentCard?.subject;
 
@@ -127,12 +126,11 @@ export default function SubjectReviewPage() {
   const handleRating = async (quality: number) => {
     if (!currentCard || !reviewSession) return;
 
-    // Create review log according to schema
     const reviewLog: ReviewLog = {
       reviewDate: new Date(),
       quality,
       flashcardId: currentCard.id,
-      userId,
+      userId: userData!.id,
     };
 
     // Update session state

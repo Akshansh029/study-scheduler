@@ -3,7 +3,11 @@ import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 export const subjectRouter = createTRPCRouter({
   getUser: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.db.user.findMany();
+    return await ctx.db.user.findUnique({
+      where: {
+        id: ctx.user.userId!,
+      },
+    });
   }),
 
   createSubject: protectedProcedure

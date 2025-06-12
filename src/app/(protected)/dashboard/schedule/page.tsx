@@ -3,11 +3,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -24,13 +22,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Plus,
-  Calendar as CalendarIcon,
-  Edit,
-  Trash2,
-  List,
-} from "lucide-react";
+import { Calendar as CalendarIcon, Edit, Trash2, List } from "lucide-react";
 import moment from "moment";
 
 import { api } from "@/trpc/react";

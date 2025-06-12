@@ -90,7 +90,7 @@ export const reviewRouter = createTRPCRouter({
         throw new Error("User not authenticated");
       }
 
-      // Verify the flashcard belongs to the user
+      // Verification of flashcard
       const flashcard = await ctx.db.flashcard.findFirst({
         where: {
           id: input.flashcardId,
@@ -104,7 +104,7 @@ export const reviewRouter = createTRPCRouter({
         throw new Error("Flashcard not found or does not belong to user");
       }
 
-      // Create a review log
+      // Create review log
       await ctx.db.reviewLog.create({
         data: {
           flashcardId: input.flashcardId,
@@ -113,7 +113,6 @@ export const reviewRouter = createTRPCRouter({
         },
       });
 
-      // Update flashcard spaced repetition values using SM-2 algorithm
       let { repetitionCount, easeFactor, interval } = flashcard;
 
       // SM-2 algorithm implementation

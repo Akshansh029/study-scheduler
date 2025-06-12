@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import moment from "moment";
 import { RRule } from "rrule";
+import { cx } from "class-variance-authority";
 
 export const sessionRouter = createTRPCRouter({
   createSession: protectedProcedure
@@ -27,6 +28,35 @@ export const sessionRouter = createTRPCRouter({
           userId: ctx.user.userId!,
         },
       });
+    }),
+
+  getSession: protectedProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const session = await ctx.db.studySession.findUnique({
+        where: {
+          id: input.sessionId,
+        },
+        select: {
+          title: true,
+          description: true,
+          startTime: true,
+          endTime: true,
+          subject: {
+            select: {
+              id: true,
+              title: true,
+              color: true,
+            },
+          },
+        },
+      });
+
+      return session;
     }),
 
   getAllSessions: protectedProcedure.query(async ({ ctx }) => {

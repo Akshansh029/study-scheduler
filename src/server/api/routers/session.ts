@@ -2,7 +2,6 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import moment from "moment";
 import { RRule } from "rrule";
-import { cx } from "class-variance-authority";
 
 export const sessionRouter = createTRPCRouter({
   createSession: protectedProcedure
@@ -26,6 +25,7 @@ export const sessionRouter = createTRPCRouter({
           description: input.description,
           subjectId: input.subjectId,
           userId: ctx.user.userId!,
+          nextSessionDate: input.startTime,
         },
       });
     }),
@@ -42,10 +42,12 @@ export const sessionRouter = createTRPCRouter({
           id: input.sessionId,
         },
         select: {
+          id: true,
           title: true,
           description: true,
           startTime: true,
           endTime: true,
+          recurrence: true,
           subject: {
             select: {
               id: true,
@@ -113,6 +115,35 @@ export const sessionRouter = createTRPCRouter({
           recurrence: input.recurrence,
           description: input.description,
           subjectId: input.subjectId,
+        },
+      });
+    }),
+
+  updateReviewDate: protectedProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        startTime: z.date(),
+        recurrence: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      let mNext = moment(input.startTime);
+
+      if (input.recurrence === "daily") {
+        mNext = mNext.clone().add(1, "day");
+      } else if (input.recurrence === "weekly") {
+        mNext = mNext.clone().add(1, "week");
+      } else if (input.recurrence === "monthly") {
+        mNext = mNext.clone().add(1, "month");
+      }
+
+      return await ctx.db.studySession.update({
+        where: { id: input.sessionId },
+        data: {
+          startTime: input.startTime,
+          nextSessionDate: mNext.toDate(),
+          status: "upcoming",
         },
       });
     }),

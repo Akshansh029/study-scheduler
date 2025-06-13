@@ -1,4 +1,5 @@
 "use client";
+import Confetti from "react-confetti-boom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -14,14 +15,20 @@ import Link from "next/link";
 const ActiveSessionPage = () => {
   const params = useParams();
   const sessionId = params.sessionId as string;
-  const [sessionTimer, setSessionTimer] = useState(0);
-  const [isTimerRunning, setIsTimerRunning] = useState(true);
+  const [sessionTimer, setSessionTimer] = useState<number>(() => {
+    const storedTime = localStorage.getItem("sessionTimer");
+    return storedTime ? parseInt(storedTime) : 0;
+  });
+  const [isTimerRunning, setIsTimerRunning] = useState(() => {
+    const storedRunning = localStorage.getItem("isTimerRunning");
+    return storedRunning ? JSON.parse(storedRunning) : true;
+  });
   const [sessionComplete, setSessionComplete] = useState(false);
   const [timeStudied, setTimeStudied] = useState(0);
   const [actualStartTimeDisplay, setActualStartTimeDisplay] = useState("");
 
   const { data: session, isLoading } = api.session.getSession.useQuery({
-    sessionId: sessionId,
+    sessionId,
   });
 
   const recordReviewMutation = api.session.updateStatus.useMutation({
@@ -30,16 +37,33 @@ const ActiveSessionPage = () => {
     },
   });
 
+  const updateReviewDateMutation = api.session.updateReviewDate.useMutation();
+
+  const updateStatusMutation = api.session.updateStatus.useMutation();
+  useEffect(() => {
+    updateStatusMutation.mutate({
+      sessionId: session?.id ?? "",
+      updatedStatus: "in-progress",
+    });
+  }, []);
+
   const actualStartTimeRef = useRef<Date | null>(null);
 
   useEffect(() => {
-    actualStartTimeRef.current ??= new Date();
+    localStorage.removeItem("isTimerRunning");
+    setIsTimerRunning(true);
   }, []);
 
   useEffect(() => {
-    if (!actualStartTimeRef.current) {
+    const storedStart = localStorage.getItem("actualStartTime");
+    if (storedStart) {
+      const parsed = new Date(storedStart);
+      actualStartTimeRef.current = parsed;
+      setActualStartTimeDisplay(moment(parsed).format("h:mm:ss A"));
+    } else {
       const now = new Date();
       actualStartTimeRef.current = now;
+      localStorage.setItem("actualStartTime", now.toISOString());
       setActualStartTimeDisplay(moment(now).format("h:mm:ss A"));
     }
   }, []);
@@ -48,10 +72,18 @@ const ActiveSessionPage = () => {
     let interval: NodeJS.Timeout;
     if (isTimerRunning) {
       interval = setInterval(() => {
-        setSessionTimer((prev) => prev + 1);
+        setSessionTimer((prev) => {
+          const updated = prev + 1;
+          localStorage.setItem("sessionTimer", updated.toString());
+          return updated;
+        });
       }, 1000);
     }
     return () => clearInterval(interval);
+  }, [isTimerRunning]);
+
+  useEffect(() => {
+    localStorage.setItem("isTimerRunning", JSON.stringify(isTimerRunning));
   }, [isTimerRunning]);
 
   const startTime = session?.startTime;
@@ -68,19 +100,17 @@ const ActiveSessionPage = () => {
     return `${minutes}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const pauseSession = () => {
-    setIsTimerRunning(false);
-  };
-
-  const resumeSession = () => {
-    setIsTimerRunning(true);
-  };
+  const pauseSession = () => setIsTimerRunning(false);
+  const resumeSession = () => setIsTimerRunning(true);
 
   const endSession = () => {
     if (!session) return;
-    recordReviewMutation.mutate({
-      sessionId,
-      updatedStatus: "completed",
+    recordReviewMutation.mutate({ sessionId, updatedStatus: "completed" });
+
+    updateReviewDateMutation.mutate({
+      sessionId: session.id,
+      startTime: session.startTime,
+      recurrence: session.recurrence!,
     });
 
     const endTime = new Date();
@@ -89,10 +119,12 @@ const ActiveSessionPage = () => {
       const diff = moment(endTime).diff(moment(startTime), "seconds");
       setTimeStudied(diff);
     }
-
     setIsTimerRunning(false);
     setSessionTimer(0);
     setSessionComplete(true);
+    localStorage.removeItem("sessionTimer");
+    localStorage.removeItem("actualStartTime");
+    localStorage.removeItem("isTimerRunning");
   };
 
   return (
@@ -110,39 +142,42 @@ const ActiveSessionPage = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-sm text-gray-600">Session Timer</div>
-              <div className="font-mono text-xl font-bold">
-                {formatTime(sessionTimer)}
+          {!sessionComplete && (
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-sm text-gray-600">Session Timer</div>
+                <div className="font-mono text-xl font-bold">
+                  {formatTime(sessionTimer)}
+                </div>
               </div>
-            </div>
-            <div className="flex gap-2">
-              {isTimerRunning && !sessionComplete ? (
-                <Button variant="outline" onClick={pauseSession}>
-                  <Pause className="mr-2 h-4 w-4" />
-                  Pause
-                </Button>
-              ) : (
+              <div className="flex gap-2">
+                {isTimerRunning ? (
+                  <Button
+                    variant="outline"
+                    onClick={pauseSession}
+                    className="cursor-pointer"
+                  >
+                    <Pause className="mr-2 h-4 w-4" /> Pause
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={resumeSession}
+                    className="cursor-pointer"
+                  >
+                    <Play className="mr-2 h-4 w-4" /> Resume
+                  </Button>
+                )}
                 <Button
-                  variant="outline"
-                  onClick={resumeSession}
+                  variant="destructive"
+                  onClick={endSession}
                   className="cursor-pointer"
                 >
-                  <Play className="mr-2 h-4 w-4" />
-                  Resume
+                  <Square className="mr-2 h-4 w-4" /> End Session
                 </Button>
-              )}
-              <Button
-                variant="destructive"
-                onClick={endSession}
-                className="cursor-pointer"
-              >
-                <Square className="mr-2 h-4 w-4" />
-                End Session
-              </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </header>
       <div className="container mx-auto p-4">
@@ -153,7 +188,12 @@ const ActiveSessionPage = () => {
           </div>
         ) : sessionComplete ? (
           /* Session Complete UI */
-          <div className="mx-auto max-w-4xl space-y-6">
+          <div className="mx-auto max-w-full space-y-6">
+            <Confetti
+              mode="fall"
+              particleCount={50}
+              colors={["#ff577f", "#ff884b"]}
+            />
             <Card>
               <CardContent className="px-8 py-6 text-center">
                 <Trophy className="mx-auto mb-4 h-16 w-16 text-yellow-500" />
@@ -171,6 +211,14 @@ const ActiveSessionPage = () => {
                     </div>
                     <div className="text-sm text-blue-800">Time Studied</div>
                   </div>
+                  <div className="rounded-lg bg-orange-50 p-4">
+                    <div className="text-2xl font-bold text-orange-600">
+                      {formatTime(duration)} hrs
+                    </div>
+                    <div className="text-sm text-orange-800">
+                      Planned Duration
+                    </div>
+                  </div>
                   <div className="rounded-lg bg-green-50 p-4">
                     <div className="text-2xl font-bold text-green-600">
                       {session?.subject?.title}
@@ -179,9 +227,9 @@ const ActiveSessionPage = () => {
                       Subject Completed
                     </div>
                   </div>
-                  <div className="rounded-lg bg-purple-50 p-4">
+                  <div className="rounded-lg bg-purple-50 p-4 md:col-start-2">
                     <div className="text-2xl font-bold text-purple-600">
-                      {moment(session?.endTime).format("MMM D, YYYY")}
+                      {moment(session?.startTime).format("MMM D, YYYY")}
                     </div>
                     <div className="text-sm text-purple-800">Session Date</div>
                   </div>
@@ -216,10 +264,10 @@ const ActiveSessionPage = () => {
                       Session Completed
                     </div>
                     <div className="text-sm text-gray-600">
-                      Started: {actualStartTimeDisplay}
+                      Started: {actualStartTimeDisplay || "Not available"}
                     </div>
                     <div className="text-sm text-gray-600">
-                      Ended: {moment().format("h:mm A")}
+                      Ended: {moment().format("h:mm:ss A")}
                     </div>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-4 text-center">
@@ -234,14 +282,6 @@ const ActiveSessionPage = () => {
                     </div>
                   </div>
                 </div>
-                {session?.description && (
-                  <div className="mt-4 rounded-lg bg-blue-50 p-4">
-                    <h4 className="mb-2 font-medium text-blue-900">
-                      Session Notes:
-                    </h4>
-                    <p className="text-blue-700">{session.description}</p>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
@@ -298,7 +338,7 @@ const ActiveSessionPage = () => {
                         <Target className="h-8 w-8 text-indigo-600" />
                       </div>
                       <div className="text-2xl font-bold text-gray-800">
-                        {session?.subject?.title}
+                        {session?.title}
                       </div>
                       <div className="text-sm text-gray-600">Current Focus</div>
                     </div>

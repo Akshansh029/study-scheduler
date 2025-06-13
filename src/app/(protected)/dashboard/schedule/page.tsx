@@ -51,7 +51,6 @@ export default function SchedulePage() {
   const subjects = api.subject.getSubjects.useQuery().data;
   const { data: rawSessions, isPending } =
     api.session.getAllSessions.useQuery();
-  console.log("Raw Sessions:", rawSessions);
 
   // Sessions mutations
   const createMutation = api.session.createSession.useMutation({
@@ -80,7 +79,7 @@ export default function SchedulePage() {
       void refetch();
       closeDialog();
     },
-    onError: (err) => toast.error(err.message),
+    onError: () => toast.error("Failed to delete the session"),
   });
 
   useEffect(() => {
@@ -160,7 +159,6 @@ export default function SchedulePage() {
     setEditing(null);
   }
 
-  console.log("Form data from submitting form:", form.startTime);
   function handleSave() {
     if (!form.title || !form.subjectId || !form.startTime || !form.endTime) {
       return toast.error("All fields required");
@@ -178,7 +176,7 @@ export default function SchedulePage() {
       return toast.error("End must be after start");
     }
 
-    const now = new Date();
+    // const now = new Date();
 
     if (editing) {
       updateMutation.mutate({
@@ -191,31 +189,31 @@ export default function SchedulePage() {
         description: form.description || undefined,
       });
 
-      if (end.getTime() < now.getTime()) {
-        // Explicitly compare timestamps for clarity
-        updateStatusMutation.mutate({
-          sessionId: editing.id,
-          updatedStatus: "completed",
-        });
-      } else if (start.getTime() > now.getTime()) {
-        updateStatusMutation.mutate({
-          sessionId: editing.id,
-          updatedStatus: "upcoming",
-        });
-      } else if (
-        start.getTime() <= now.getTime() &&
-        end.getTime() >= now.getTime()
-      ) {
-        updateStatusMutation.mutate({
-          sessionId: editing.id,
-          updatedStatus: "in-progress",
-        });
-      } else {
-        updateStatusMutation.mutate({
-          sessionId: editing.id,
-          updatedStatus: "overdue", // Fallback
-        });
-      }
+      // if (end.getTime() < now.getTime()) {
+      //   // Explicitly compare timestamps for clarity
+      //   updateStatusMutation.mutate({
+      //     sessionId: editing.id,
+      //     updatedStatus: "completed",
+      //   });
+      // } else if (start.getTime() > now.getTime()) {
+      //   updateStatusMutation.mutate({
+      //     sessionId: editing.id,
+      //     updatedStatus: "upcoming",
+      //   });
+      // } else if (
+      //   start.getTime() <= now.getTime() &&
+      //   end.getTime() >= now.getTime()
+      // ) {
+      //   updateStatusMutation.mutate({
+      //     sessionId: editing.id,
+      //     updatedStatus: "in-progress",
+      //   });
+      // } else {
+      //   updateStatusMutation.mutate({
+      //     sessionId: editing.id,
+      //     updatedStatus: "overdue", // Fallback
+      //   });
+      // }
       return;
     }
 

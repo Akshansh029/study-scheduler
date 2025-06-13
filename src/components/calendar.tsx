@@ -1,5 +1,4 @@
 "use client";
-import dayjs from "dayjs";
 import React, { useRef } from "react";
 import FullCalendar from "@fullcalendar/react";
 import type {
@@ -18,7 +17,6 @@ export default function CalendarComponent({
   events,
   onSelectEvent,
   onDateSelect,
-  eventPropGetter,
   isLoading = false,
 }: CalendarComponentProps) {
   const calendarRef = useRef<FullCalendar>(null);
@@ -38,8 +36,6 @@ export default function CalendarComponent({
         end: session.endTime,
         allDay: false,
       };
-
-      console.log("Time going in calendar: ", session.startTime);
 
       if (session.recurrence && session.recurrence !== "none") {
         const ms = session.endTime.getTime() - session.startTime.getTime();

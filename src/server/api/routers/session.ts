@@ -193,8 +193,10 @@ export const sessionRouter = createTRPCRouter({
 
   sessionStats: protectedProcedure.query(async ({ ctx }) => {
     const today = new Date();
-    const weekStart = moment().startOf("week").toDate();
-    const weekEnd = moment().endOf("week").toDate();
+
+    // Fix: Set Monday as start of week (ISO week)
+    const weekStart = moment().startOf("isoWeek").toDate(); // Monday
+    const weekEnd = moment().endOf("isoWeek").toDate(); // Sunday
 
     const sessions = await ctx.db.studySession.findMany({
       where: {
@@ -243,10 +245,17 @@ export const sessionRouter = createTRPCRouter({
                 ? RRule.WEEKLY
                 : RRule.MONTHLY,
           dtstart: session.startTime,
-          until: weekEnd,
         });
 
+        // Get occurrences for the entire week (Monday to Sunday)
         const occurrenceDates = rule.between(weekStart, weekEnd, true);
+
+        console.log("Debug info:");
+        console.log("weekStart (Monday):", weekStart);
+        console.log("weekEnd (Sunday):", weekEnd);
+        console.log("session.startTime:", session.startTime);
+        console.log("session.recurrence:", session.recurrence);
+        console.log("occurrenceDates found:", occurrenceDates);
 
         occurrenceDates.forEach((occ) => {
           occurrencesThisWeek.push({
@@ -299,6 +308,11 @@ export const sessionRouter = createTRPCRouter({
     const totalMinutesWeek = Math.floor(totalStudyTimeMsWeek / (1000 * 60));
     const weekHrs = Math.floor(totalMinutesWeek / 60);
     const weekMins = totalMinutesWeek % 60;
+
+    console.log("Final results:");
+    console.log("weekCount:", weekCount);
+    console.log("weekHrs:", weekHrs);
+    console.log("weekMins:", weekMins);
 
     return {
       hours,

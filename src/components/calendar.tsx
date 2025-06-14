@@ -1,4 +1,6 @@
 "use client";
+
+import enGbLocale from "@fullcalendar/core/locales/en-gb";
 import React, { useRef } from "react";
 import FullCalendar from "@fullcalendar/react";
 import type {
@@ -104,6 +106,8 @@ export default function CalendarComponent({
         selectable={!!onDateSelect}
         selectMirror
         dayMaxEvents
+        locale="en-gb" // Date format as dd/mm
+        locales={[enGbLocale]}
         firstDay={1}
         eventClick={handleEventClick}
         select={handleDateSelect}
@@ -116,10 +120,13 @@ export default function CalendarComponent({
         slotDuration="00:30:00"
         snapDuration="00:15:00"
         expandRows={true}
-        dayHeaderFormat={{
-          weekday: "short",
-          day: "2-digit",
-          month: "2-digit",
+        slotLabelFormat={{
+          hour: "numeric",
+          hour12: true,
+        }}
+        eventTimeFormat={{
+          hour: "numeric",
+          hour12: true,
         }}
       />
     </div>

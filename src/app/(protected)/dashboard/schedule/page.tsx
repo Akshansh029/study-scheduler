@@ -372,13 +372,6 @@ export default function SchedulePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Start</Label>
-                {/* <Input
-                  type="datetime-local"
-                  value={form.startTime}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, startTime: e.target.value }))
-                  }
-                /> */}
                 <DatePicker
                   selected={form.startTime ? new Date(form.startTime) : null}
                   onChange={(date) => {
@@ -400,13 +393,6 @@ export default function SchedulePage() {
               </div>
               <div className="grid gap-2">
                 <Label>End</Label>
-                {/* <Input
-                  type="datetime-local"
-                  value={form.endTime}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, endTime: e.target.value }))
-                  }
-                /> */}
                 <DatePicker
                   selected={form.endTime ? new Date(form.endTime) : null}
                   onChange={(date) => {

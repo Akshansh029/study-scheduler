@@ -101,6 +101,7 @@ export default function CalendarComponent({
         selectable={!!onDateSelect}
         selectMirror
         dayMaxEvents
+        firstDay={1}
         eventClick={handleEventClick}
         select={handleDateSelect}
         events={transformEvents()}

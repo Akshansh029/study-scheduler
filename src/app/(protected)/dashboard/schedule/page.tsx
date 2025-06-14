@@ -1,5 +1,6 @@
 "use client";
-
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,7 @@ export default function SchedulePage() {
     .map((s) => ({
       id: s.id,
       title: s.title,
+      nextSessionDate: s.nextSessionDate,
       startTime: new Date(s.startTime),
       endTime: new Date(s.endTime),
       subjectId: s.subjectId!,
@@ -188,32 +190,6 @@ export default function SchedulePage() {
         recurrence: form.recurrence,
         description: form.description || undefined,
       });
-
-      // if (end.getTime() < now.getTime()) {
-      //   // Explicitly compare timestamps for clarity
-      //   updateStatusMutation.mutate({
-      //     sessionId: editing.id,
-      //     updatedStatus: "completed",
-      //   });
-      // } else if (start.getTime() > now.getTime()) {
-      //   updateStatusMutation.mutate({
-      //     sessionId: editing.id,
-      //     updatedStatus: "upcoming",
-      //   });
-      // } else if (
-      //   start.getTime() <= now.getTime() &&
-      //   end.getTime() >= now.getTime()
-      // ) {
-      //   updateStatusMutation.mutate({
-      //     sessionId: editing.id,
-      //     updatedStatus: "in-progress",
-      //   });
-      // } else {
-      //   updateStatusMutation.mutate({
-      //     sessionId: editing.id,
-      //     updatedStatus: "overdue", // Fallback
-      //   });
-      // }
       return;
     }
 
@@ -268,7 +244,6 @@ export default function SchedulePage() {
                 events={calendarEvents}
                 onSelectEvent={openEdit}
                 onDateSelect={(start, end) => {
-                  // Optional: Auto-open create dialog with pre-filled times
                   setForm((prev) => ({
                     ...prev,
                     startTime: moment(start).local().format("YYYY-MM-DDTHH:mm"),
@@ -397,22 +372,58 @@ export default function SchedulePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Start</Label>
-                <Input
+                {/* <Input
                   type="datetime-local"
                   value={form.startTime}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, startTime: e.target.value }))
                   }
+                /> */}
+                <DatePicker
+                  selected={form.startTime ? new Date(form.startTime) : null}
+                  onChange={(date) => {
+                    if (date) {
+                      setForm((f) => ({
+                        ...f,
+                        startTime: date.toISOString(),
+                      }));
+                    }
+                  }}
+                  autoFocus={false}
+                  showTimeSelect
+                  className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-none focus:ring-0 focus:outline-none"
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  placeholderText="dd/mm/yyyy HH:mm"
+                  dateFormat="dd/MM/yyyy HH:mm"
                 />
               </div>
               <div className="grid gap-2">
                 <Label>End</Label>
-                <Input
+                {/* <Input
                   type="datetime-local"
                   value={form.endTime}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, endTime: e.target.value }))
                   }
+                /> */}
+                <DatePicker
+                  selected={form.endTime ? new Date(form.endTime) : null}
+                  onChange={(date) => {
+                    if (date) {
+                      setForm((f) => ({
+                        ...f,
+                        endTime: date.toISOString(),
+                      }));
+                    }
+                  }}
+                  autoFocus={false}
+                  showTimeSelect
+                  className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-none focus:ring-0 focus:outline-none"
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  placeholderText="dd/mm/yyyy HH:mm"
+                  dateFormat="dd/MM/yyyy HH:mm"
                 />
               </div>
             </div>

@@ -20,6 +20,7 @@ model User {
     sessions   StudySession[]
     flashcards Flashcard[]
     reviewLogs ReviewLog[]
+    Todo       Todo[]
 }
 
 model Subject {
@@ -82,4 +83,13 @@ model ReviewLog {
     flashcardId String
     user        User      @relation(fields: [userId], references: [id])
     userId      String
+}
+
+model Todo {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    text      String
+    completed Boolean  @default(false)
+    userId    String
+    user      User     @relation(fields: [userId], references: [id])
 }

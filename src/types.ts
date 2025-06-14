@@ -46,13 +46,6 @@ export interface FormState {
   description: string;
 }
 
-export interface TodoItem {
-  id: string;
-  text: string;
-  completed: boolean;
-  priority: "low" | "medium" | "high";
-}
-
 export interface Subject {
   id: string;
   title: string;
@@ -104,4 +97,10 @@ export interface SubjectWithCards {
   title: string;
   color: string;
   flashcards: ReviewFlashcard[];
+}
+
+export interface Todo {
+  id: string;
+  text: string;
+  completed: boolean;
 }

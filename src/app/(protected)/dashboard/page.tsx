@@ -20,41 +20,55 @@ import {
   CheckCircle2,
   Trash2,
   NotepadText,
+  Check,
 } from "lucide-react";
-import type { StudySession, SubjectWithCards, TodoItem } from "@/types";
+import type { StudySession, Todo } from "@/types";
 import TopHeader from "@/components/TopHeader";
 import { api } from "@/trpc/react";
 import moment from "moment";
 import { getEarliestNextReviewDate, isSubjectOverdue } from "utils/utils";
+import { toast } from "sonner";
+import useRefetch from "hooks/use-refetch";
 
 export default function DashboardPage() {
-  const [todos, setTodos] = useState<TodoItem[]>([
-    {
-      id: "1",
-      text: "Review Physics flashcards",
-      completed: false,
-      priority: "high",
-    },
-    {
-      id: "2",
-      text: "Complete Math homework",
-      completed: true,
-      priority: "medium",
-    },
-    {
-      id: "3",
-      text: "Read Chemistry chapter 5",
-      completed: false,
-      priority: "low",
-    },
-  ]);
+  const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState("");
   const [allSessions, setAllSessions] = useState<StudySession[]>();
 
+  const refetch = useRefetch();
+
+  // All queries and mutations
   const { data: sessionStats } = api.session.sessionStats.useQuery();
   const { data: sessionData } = api.session.getAllSessions.useQuery();
   const { data: cardStats } = api.flashcard.stats.useQuery();
   const { data: activeSubjects } = api.review.getSubjectWithCards.useQuery();
+  const { data: allTodos } = api.todo.getAllTodos.useQuery();
+  const createTodoMutation = api.todo.createTodo.useMutation({
+    onSuccess: () => {
+      // toast.success("Todo created successfully");
+      void refetch();
+    },
+    onError: () => {
+      toast.error("Failed to create todo");
+    },
+  });
+  const toggleTodoMutation = api.todo.toggleTodo.useMutation({
+    onSuccess: () => {
+      void refetch();
+    },
+    onError: () => {
+      toast.error("Failed to update todo");
+    },
+  });
+  const deleteTodoMutation = api.todo.deleteTodo.useMutation({
+    onSuccess: () => {
+      void refetch();
+    },
+    onError: () => {
+      toast.error("Failed to delete todo");
+    },
+  });
+
   const completedSessionsPercentage =
     sessionStats?.completedSessionsPercentage ?? 0;
   const dueTodayCards = cardStats?.dueToday ?? 0;
@@ -72,7 +86,10 @@ export default function DashboardPage() {
       );
       setAllSessions(todaySessions as StudySession[]);
     }
-  }, [sessionData]);
+    if (allTodos) {
+      setTodos(allTodos as Todo[]);
+    }
+  }, [sessionData, allTodos]);
 
   const subjectsWithDueCards = activeSubjects?.filter((subject) =>
     isSubjectOverdue(subject),
@@ -105,41 +122,21 @@ export default function DashboardPage() {
   }, []);
 
   const addTodo = () => {
-    if (newTodo.trim()) {
-      const todo: TodoItem = {
-        id: Date.now().toString(),
-        text: newTodo,
-        completed: false,
-        priority: "medium",
-      };
-      setTodos([...todos, todo]);
-      setNewTodo("");
-    }
+    createTodoMutation.mutate({
+      text: newTodo,
+    });
   };
 
   const toggleTodo = (id: string) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
-      ),
-    );
+    toggleTodoMutation.mutate({
+      todoId: id,
+    });
   };
 
   const deleteTodo = (id: string) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-red-100 text-red-800";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800";
-      case "low":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+    deleteTodoMutation.mutate({
+      todoId: id,
+    });
   };
 
   const completedTodos = todos.filter((todo) => todo.completed).length;
@@ -169,94 +166,108 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[385px] space-y-4 overflow-auto">
-              {(allSessions?.length ?? 0) > 0 &&
-                allSessions?.map((session, key) => {
-                  return (
-                    <div
-                      className="flex items-center justify-between rounded-lg border-l-4 p-4"
-                      style={{
-                        borderColor: session.subject.color,
-                        backgroundColor: `${session.subject.color}20`,
-                      }}
-                      key={key}
-                    >
-                      <div className="flex items-center gap-3">
+              {(activeSubjects?.length ?? 0) <= 0 ||
+              (allSessions?.length ?? 0) <= 0 ? (
+                <div className="flex h-full w-full items-center justify-center gap-2">
+                  <p className="text-base text-gray-600">
+                    No session or review for today
+                  </p>
+                  <Check size={25} className="text-gray-600" />
+                </div>
+              ) : (
+                <>
+                  {(allSessions?.length ?? 0) > 0 &&
+                    allSessions?.map((session, key) => {
+                      return (
                         <div
-                          className="flex h-10 w-10 items-center justify-center rounded-lg"
+                          className="flex items-center justify-between rounded-lg border-l-4 p-4"
                           style={{
-                            backgroundColor: `${session.subject.color}40`,
+                            borderColor: session.subject.color,
+                            backgroundColor: `${session.subject.color}20`,
                           }}
+                          key={key}
                         >
-                          <BookOpen
-                            className="h-5 w-5"
-                            style={{ color: session.subject.color }}
-                          />
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="flex h-10 w-10 items-center justify-center rounded-lg"
+                              style={{
+                                backgroundColor: `${session.subject.color}40`,
+                              }}
+                            >
+                              <BookOpen
+                                className="h-5 w-5"
+                                style={{ color: session.subject.color }}
+                              />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">
+                                {session.title} Session
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                {session.subject.title}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">
+                              {moment(session.nextSessionDate).format(
+                                "hh:mm A",
+                              )}
+                            </p>
+                            {getStatusBadge(calculateStatus(session))}
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="font-medium">
-                            {session.title} Session
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            {session.subject.title}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {moment(session.nextSessionDate).format("hh:mm A")}
-                        </p>
-                        {getStatusBadge(calculateStatus(session))}
-                      </div>
-                    </div>
-                  );
-                })}
-              {(subjectsWithDueCards?.length ?? 0) > 0 &&
-                subjectsWithDueCards?.map((subject, key) => {
-                  return (
-                    <div
-                      className="flex items-center justify-between rounded-lg border-l-4 p-4"
-                      style={{
-                        borderColor: subject.color,
-                        backgroundColor: `${subject.color}20`,
-                      }}
-                      key={key}
-                    >
-                      <div className="flex items-center gap-3">
+                      );
+                    })}
+                  {(subjectsWithDueCards?.length ?? 0) > 0 &&
+                    subjectsWithDueCards?.map((subject, key) => {
+                      return (
                         <div
-                          className="flex h-10 w-10 items-center justify-center rounded-lg"
+                          className="flex items-center justify-between rounded-lg border-l-4 p-4"
                           style={{
-                            backgroundColor: `${subject.color}40`,
+                            borderColor: subject.color,
+                            backgroundColor: `${subject.color}20`,
                           }}
+                          key={key}
                         >
-                          <NotepadText
-                            className="h-5 w-5"
-                            style={{ color: subject.color }}
-                          />
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="flex h-10 w-10 items-center justify-center rounded-lg"
+                              style={{
+                                backgroundColor: `${subject.color}40`,
+                              }}
+                            >
+                              <NotepadText
+                                className="h-5 w-5"
+                                style={{ color: subject.color }}
+                              />
+                            </div>
+                            <div>
+                              <h4 className="font-medium">
+                                {subject.title} Review
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                {subject.title}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">
+                              {moment(
+                                getEarliestNextReviewDate(subject),
+                              ).format("hh:mm A")}
+                            </p>
+                            {isSubjectOverdue(subject) ? (
+                              <Badge variant="destructive">Overdue</Badge>
+                            ) : (
+                              <></>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="font-medium">
-                            {subject.title} Review
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            {subject.title}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {moment(getEarliestNextReviewDate(subject)).format(
-                            "hh:mm A",
-                          )}
-                        </p>
-                        {isSubjectOverdue(subject) ? (
-                          <Badge variant="destructive">Overdue</Badge>
-                        ) : (
-                          <></>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -354,7 +365,11 @@ export default function DashboardPage() {
                   onKeyDown={(e) => e.key === "Enter" && addTodo()}
                   className="flex-1"
                 />
-                <Button onClick={addTodo}>
+                <Button
+                  onClick={addTodo}
+                  disabled={createTodoMutation.status === "pending"}
+                  className="cursor-pointer"
+                >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -388,12 +403,6 @@ export default function DashboardPage() {
                         {todo.text}
                       </span>
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className={getPriorityColor(todo.priority)}
-                    >
-                      {todo.priority}
-                    </Badge>
                     <Button
                       variant="ghost"
                       size="sm"

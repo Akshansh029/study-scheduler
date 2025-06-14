@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Play, Trophy } from "lucide-react";
 import Link from "next/link";
-import moment from "moment";
 import { api } from "@/trpc/react";
 import TopHeader from "@/components/TopHeader";
 import FadeLoader from "react-spinners/FadeLoader";

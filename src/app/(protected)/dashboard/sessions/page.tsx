@@ -17,13 +17,22 @@ export default function StudySessionsPage() {
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const router = useRouter();
 
-  const { data, isPending } = api.session.getAllSessions.useQuery();
+  const { data: sessionData, isPending } =
+    api.session.getAllSessions.useQuery();
 
   useEffect(() => {
-    if (data) {
-      setSessions(data as StudySession[]);
+    if (sessionData) {
+      const startOfDay = moment().startOf("day").toDate();
+      const endOfDay = moment().endOf("day").toDate();
+
+      const todaySessions = sessionData.filter(
+        (session) =>
+          session.nextSessionDate >= startOfDay &&
+          session.nextSessionDate <= endOfDay,
+      );
+      setSessions(todaySessions as StudySession[]);
     }
-  }, [data]);
+  }, [sessionData]);
 
   // Calculate status without side effects
   const calculateStatus = useCallback((session: StudySession) => {
@@ -83,14 +92,14 @@ export default function StudySessionsPage() {
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle>Scheduled Sessions</CardTitle>
+                <CardTitle>Scheduled Sessions for today</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="min-h-full space-y-4">
                   {sessions.length === 0 && (
                     <div className="flex w-full justify-center">
-                      <p className="mx-auto text-gray-500">
-                        No sessions scheduled
+                      <p className="mx-auto text-lg text-gray-500">
+                        All sessions completed for today! 🎊
                       </p>
                     </div>
                   )}
@@ -119,7 +128,7 @@ export default function StudySessionsPage() {
                                 </p>
                                 <div className="mt-1 flex gap-2 text-sm text-gray-500">
                                   <p>
-                                    {moment(session.startTime).format(
+                                    {moment(session.nextSessionDate).format(
                                       "ddd, DD/MM/yyyy",
                                     )}
                                   </p>

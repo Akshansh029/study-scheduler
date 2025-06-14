@@ -31,21 +31,28 @@ const ActiveSessionPage = () => {
     sessionId,
   });
 
-  const recordReviewMutation = api.session.updateStatus.useMutation({
-    onError: () => {
-      toast.error(`Failed to record session status`);
+  const updateSessionDateMutation = api.session.updateSessionDate.useMutation({
+    onSuccess: () => {
+      toast.success("Review date updated for the session");
+    },
+    onError: (err) => {
+      console.error(err);
+      toast.error("Couldn't update review date");
     },
   });
 
-  const updateReviewDateMutation = api.session.updateReviewDate.useMutation();
-
-  const updateStatusMutation = api.session.updateStatus.useMutation();
+  const updateStatusMutation = api.session.updateStatus.useMutation({
+    onError: (err) => {
+      console.log(err);
+      toast.error(`Failed to record session status`);
+    },
+  });
   useEffect(() => {
     updateStatusMutation.mutate({
-      sessionId: session?.id ?? "",
+      sessionId: sessionId,
       updatedStatus: "in-progress",
     });
-  }, []);
+  }, [sessionId]);
 
   const actualStartTimeRef = useRef<Date | null>(null);
 
@@ -105,13 +112,16 @@ const ActiveSessionPage = () => {
 
   const endSession = () => {
     if (!session) return;
-    recordReviewMutation.mutate({ sessionId, updatedStatus: "completed" });
+    updateStatusMutation.mutate({ sessionId, updatedStatus: "completed" });
 
-    updateReviewDateMutation.mutate({
-      sessionId: session.id,
-      startTime: session.startTime,
-      recurrence: session.recurrence!,
-    });
+    if (session.status !== "none") {
+      updateSessionDateMutation.mutate({
+        sessionId: session.id,
+        startTime: session.startTime,
+        recurrence: session.recurrence!,
+        nextSessionDate: session.nextSessionDate,
+      });
+    }
 
     const endTime = new Date();
     const startTime = actualStartTimeRef.current;
@@ -191,7 +201,7 @@ const ActiveSessionPage = () => {
           <div className="mx-auto max-w-full space-y-6">
             <Confetti
               mode="fall"
-              particleCount={50}
+              particleCount={25}
               colors={["#ff577f", "#ff884b"]}
             />
             <Card>
@@ -202,14 +212,17 @@ const ActiveSessionPage = () => {
                 </h2>
                 <p className="mb-6 text-gray-600">
                   Great work! You&apos;ve completed your{" "}
-                  {session?.subject?.title} study session.
+                  <span className="font-semibold">{session?.title}</span> study
+                  session.
                 </p>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="rounded-lg bg-blue-50 p-4">
                     <div className="text-2xl font-bold text-blue-600">
                       {moment.utc(timeStudied * 1000).format("HH:mm:ss")}
                     </div>
-                    <div className="text-sm text-blue-800">Time Studied</div>
+                    <div className="text-sm text-blue-800">
+                      Time Studied in app
+                    </div>
                   </div>
                   <div className="rounded-lg bg-orange-50 p-4">
                     <div className="text-2xl font-bold text-orange-600">

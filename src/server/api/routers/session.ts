@@ -48,6 +48,8 @@ export const sessionRouter = createTRPCRouter({
           startTime: true,
           endTime: true,
           recurrence: true,
+          status: true,
+          nextSessionDate: true,
           subject: {
             select: {
               id: true,
@@ -79,6 +81,7 @@ export const sessionRouter = createTRPCRouter({
         subjectId: true,
         description: true,
         status: true,
+        nextSessionDate: true,
         subject: {
           select: {
             id: true,
@@ -119,12 +122,13 @@ export const sessionRouter = createTRPCRouter({
       });
     }),
 
-  updateReviewDate: protectedProcedure
+  updateSessionDate: protectedProcedure
     .input(
       z.object({
         sessionId: z.string(),
         startTime: z.date(),
         recurrence: z.string(),
+        nextSessionDate: z.date(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -141,7 +145,7 @@ export const sessionRouter = createTRPCRouter({
       return await ctx.db.studySession.update({
         where: { id: input.sessionId },
         data: {
-          startTime: input.startTime,
+          startTime: input.nextSessionDate,
           nextSessionDate: mNext.toDate(),
           status: "upcoming",
         },

@@ -173,12 +173,6 @@ export default function ReviewPage() {
                                 <span>
                                   {stat.flashcards.length} total cards
                                 </span>
-                                <span>
-                                  Last reviewed{" "}
-                                  {moment(
-                                    getEarliestNextReviewDate(stat),
-                                  ).fromNow()}
-                                </span>
                               </div>
                             </div>
                           </div>

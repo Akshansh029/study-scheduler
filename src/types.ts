@@ -4,6 +4,7 @@ export interface StudySession {
   startTime: Date;
   endTime: Date;
   subjectId: string;
+  nextSessionDate: Date;
   subject: { id: string; title: string; color: string };
   recurrence?: string | null;
   description?: string | null;

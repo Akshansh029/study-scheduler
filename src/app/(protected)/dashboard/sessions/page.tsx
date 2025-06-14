@@ -105,6 +105,7 @@ export default function StudySessionsPage() {
                   )}
                   {sessions.map((session) => {
                     const status = calculateStatus(session);
+                    // const status = session.status;
                     return (
                       <Card
                         key={session.id}

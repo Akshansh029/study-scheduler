@@ -12,6 +12,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import rrulePlugin from "@fullcalendar/rrule";
 import type { CalendarComponentProps } from "@/types";
+import moment from "moment";
 
 export default function CalendarComponent({
   events,
@@ -45,7 +46,8 @@ export default function CalendarComponent({
 
         baseEvent.rrule = {
           freq: session.recurrence.toUpperCase(),
-          dtstart: session.startTime,
+          // dtstart: session.startTime,
+          dtstart: moment(session.startTime).format("YYYY-MM-DD[T]HH:mm:ss"),
           // until: session.endTime, // This was the problematic line for 'until'
         };
 
@@ -83,6 +85,7 @@ export default function CalendarComponent({
   return (
     <div className="h-full w-full" style={{ minHeight: "700px" }}>
       <FullCalendar
+        timeZone="local"
         ref={calendarRef}
         plugins={[
           dayGridPlugin,
@@ -110,7 +113,6 @@ export default function CalendarComponent({
         slotMaxTime="24:00:00"
         allDaySlot={false}
         nowIndicator
-        //   timeZone="Asia/Kolkata"
         slotDuration="00:30:00"
         snapDuration="00:15:00"
         expandRows={true}

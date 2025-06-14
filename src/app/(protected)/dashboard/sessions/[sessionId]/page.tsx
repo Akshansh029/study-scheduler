@@ -11,6 +11,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Trophy, Home, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import useRefetch from "hooks/use-refetch";
 
 const ActiveSessionPage = () => {
   const params = useParams();
@@ -31,9 +32,12 @@ const ActiveSessionPage = () => {
     sessionId,
   });
 
+  const refetch = useRefetch();
+
   const updateSessionDateMutation = api.session.updateSessionDate.useMutation({
     onSuccess: () => {
       toast.success("Review date updated for the session");
+      void refetch();
     },
     onError: (err) => {
       console.error(err);
@@ -110,31 +114,39 @@ const ActiveSessionPage = () => {
   const pauseSession = () => setIsTimerRunning(false);
   const resumeSession = () => setIsTimerRunning(true);
 
-  const endSession = () => {
+  const endSession = async () => {
     if (!session) return;
-    updateStatusMutation.mutate({ sessionId, updatedStatus: "completed" });
-
-    if (session.status !== "none") {
-      updateSessionDateMutation.mutate({
-        sessionId: session.id,
-        startTime: session.startTime,
-        recurrence: session.recurrence!,
-        nextSessionDate: session.nextSessionDate,
+    try {
+      await updateStatusMutation.mutateAsync({
+        sessionId,
+        updatedStatus: "completed",
       });
-    }
 
-    const endTime = new Date();
-    const startTime = actualStartTimeRef.current;
-    if (startTime) {
-      const diff = moment(endTime).diff(moment(startTime), "seconds");
-      setTimeStudied(diff);
+      if (session.recurrence && session.recurrence !== "none") {
+        updateSessionDateMutation.mutate({
+          sessionId: session.id,
+          startTime: session.startTime,
+          recurrence: session?.recurrence,
+          nextSessionDate: session.nextSessionDate,
+        });
+      }
+
+      const endTime = new Date();
+      const startTime = actualStartTimeRef.current;
+      if (startTime) {
+        const diff = moment(endTime).diff(moment(startTime), "seconds");
+        setTimeStudied(diff);
+      }
+      setIsTimerRunning(false);
+      setSessionTimer(0);
+      setSessionComplete(true);
+      localStorage.removeItem("sessionTimer");
+      localStorage.removeItem("actualStartTime");
+      localStorage.removeItem("isTimerRunning");
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong ending your session");
     }
-    setIsTimerRunning(false);
-    setSessionTimer(0);
-    setSessionComplete(true);
-    localStorage.removeItem("sessionTimer");
-    localStorage.removeItem("actualStartTime");
-    localStorage.removeItem("isTimerRunning");
   };
 
   return (

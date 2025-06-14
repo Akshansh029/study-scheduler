@@ -250,13 +250,6 @@ export const sessionRouter = createTRPCRouter({
         // Get occurrences for the entire week (Monday to Sunday)
         const occurrenceDates = rule.between(weekStart, weekEnd, true);
 
-        console.log("Debug info:");
-        console.log("weekStart (Monday):", weekStart);
-        console.log("weekEnd (Sunday):", weekEnd);
-        console.log("session.startTime:", session.startTime);
-        console.log("session.recurrence:", session.recurrence);
-        console.log("occurrenceDates found:", occurrenceDates);
-
         occurrenceDates.forEach((occ) => {
           occurrencesThisWeek.push({
             startTime: occ,
@@ -308,11 +301,6 @@ export const sessionRouter = createTRPCRouter({
     const totalMinutesWeek = Math.floor(totalStudyTimeMsWeek / (1000 * 60));
     const weekHrs = Math.floor(totalMinutesWeek / 60);
     const weekMins = totalMinutesWeek % 60;
-
-    console.log("Final results:");
-    console.log("weekCount:", weekCount);
-    console.log("weekHrs:", weekHrs);
-    console.log("weekMins:", weekMins);
 
     return {
       hours,

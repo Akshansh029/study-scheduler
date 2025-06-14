@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -12,21 +12,20 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Calendar,
-  Target,
   TrendingUp,
   BookOpen,
-  Brain,
   Plus,
   CheckCircle2,
   Trash2,
-  Flame,
-  Award,
+  NotepadText,
 } from "lucide-react";
-import type { TodoItem } from "@/types";
+import type { StudySession, SubjectWithCards, TodoItem } from "@/types";
 import TopHeader from "@/components/TopHeader";
+import { api } from "@/trpc/react";
+import moment from "moment";
+import { getEarliestNextReviewDate, isSubjectOverdue } from "utils/utils";
 
 export default function DashboardPage() {
   const [todos, setTodos] = useState<TodoItem[]>([
@@ -50,6 +49,60 @@ export default function DashboardPage() {
     },
   ]);
   const [newTodo, setNewTodo] = useState("");
+  const [allSessions, setAllSessions] = useState<StudySession[]>();
+
+  const { data: sessionStats } = api.session.sessionStats.useQuery();
+  const { data: sessionData } = api.session.getAllSessions.useQuery();
+  const { data: cardStats } = api.flashcard.stats.useQuery();
+  const { data: activeSubjects } = api.review.getSubjectWithCards.useQuery();
+  const completedSessionsPercentage =
+    sessionStats?.completedSessionsPercentage ?? 0;
+  const dueTodayCards = cardStats?.dueToday ?? 0;
+  const todayCards = cardStats?.totalFlashcards ?? 0;
+
+  useEffect(() => {
+    if (sessionData) {
+      const startOfDay = moment().startOf("day").toDate();
+      const endOfDay = moment().endOf("day").toDate();
+
+      const todaySessions = sessionData.filter(
+        (session) =>
+          session.nextSessionDate >= startOfDay &&
+          session.nextSessionDate <= endOfDay,
+      );
+      setAllSessions(todaySessions as StudySession[]);
+    }
+  }, [sessionData]);
+
+  const subjectsWithDueCards = activeSubjects?.filter((subject) =>
+    isSubjectOverdue(subject),
+  );
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "due-now":
+        return <Badge className="bg-orange-500">Due Now</Badge>;
+      case "overdue":
+        return <Badge variant="destructive">Overdue</Badge>;
+      case "in-progress":
+        return <Badge className="bg-blue-500">In Progress</Badge>;
+      case "completed":
+        return <Badge className="bg-green-500">Completed</Badge>;
+      case "upcoming":
+        return <Badge variant="default">Upcoming</Badge>;
+      default:
+        return <Badge variant="default">Unknown</Badge>;
+    }
+  };
+
+  const calculateStatus = useCallback((session: StudySession) => {
+    const now = new Date();
+    if (session.status === "completed") return "completed";
+    if (session.status === "in-progress") return "in-progress";
+    if (now >= session.startTime && now <= session.endTime) return "due-now";
+    if (now > session.endTime) return "overdue";
+    return "upcoming";
+  }, []);
 
   const addTodo = () => {
     if (newTodo.trim()) {
@@ -103,68 +156,9 @@ export default function DashboardPage() {
       />
 
       <div className="space-y-6 p-6">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Today&apos;s Reviews
-              </CardTitle>
-              <Brain className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">24</div>
-              <p className="text-muted-foreground text-xs">
-                +12% from yesterday
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Study Streak
-              </CardTitle>
-              <Flame className="h-4 w-4 text-orange-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">7 days</div>
-              <p className="text-muted-foreground text-xs">Keep it up!</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Cards Mastered
-              </CardTitle>
-              <Award className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">156</div>
-              <p className="text-muted-foreground text-xs">+23 this week</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Accuracy Rate
-              </CardTitle>
-              <Target className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">87%</div>
-              <p className="text-muted-foreground text-xs">
-                +5% from last week
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Today's Schedule */}
-          <Card className="lg:col-span-2">
+          <Card className="max-h-[445px] lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
@@ -174,65 +168,100 @@ export default function DashboardPage() {
                 Your planned study sessions and reviews for today
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border-l-4 border-blue-500 bg-blue-50 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                    <BookOpen className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Physics Review</h4>
-                    <p className="text-sm text-gray-600">
-                      Quantum Mechanics - 24 cards due
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">9:00 AM</p>
-                  <Badge variant="secondary">Due Now</Badge>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between rounded-lg border-l-4 border-green-500 bg-green-50 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                    <BookOpen className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Mathematics Study</h4>
-                    <p className="text-sm text-gray-600">
-                      Calculus - Scheduled session
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">2:00 PM</p>
-                  <Badge variant="outline">Upcoming</Badge>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between rounded-lg border-l-4 border-purple-500 bg-purple-50 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                    <BookOpen className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Chemistry Review</h4>
-                    <p className="text-sm text-gray-600">
-                      Organic Chemistry - 18 cards due
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">4:30 PM</p>
-                  <Badge variant="outline">Upcoming</Badge>
-                </div>
-              </div>
+            <CardContent className="h-[385px] space-y-4 overflow-auto">
+              {(allSessions?.length ?? 0) > 0 &&
+                allSessions?.map((session, key) => {
+                  return (
+                    <div
+                      className="flex items-center justify-between rounded-lg border-l-4 p-4"
+                      style={{
+                        borderColor: session.subject.color,
+                        backgroundColor: `${session.subject.color}20`,
+                      }}
+                      key={key}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex h-10 w-10 items-center justify-center rounded-lg"
+                          style={{
+                            backgroundColor: `${session.subject.color}40`,
+                          }}
+                        >
+                          <BookOpen
+                            className="h-5 w-5"
+                            style={{ color: session.subject.color }}
+                          />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">
+                            {session.title} Session
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {session.subject.title}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">
+                          {moment(session.nextSessionDate).format("hh:mm A")}
+                        </p>
+                        {getStatusBadge(calculateStatus(session))}
+                      </div>
+                    </div>
+                  );
+                })}
+              {(subjectsWithDueCards?.length ?? 0) > 0 &&
+                subjectsWithDueCards?.map((subject, key) => {
+                  return (
+                    <div
+                      className="flex items-center justify-between rounded-lg border-l-4 p-4"
+                      style={{
+                        borderColor: subject.color,
+                        backgroundColor: `${subject.color}20`,
+                      }}
+                      key={key}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex h-10 w-10 items-center justify-center rounded-lg"
+                          style={{
+                            backgroundColor: `${subject.color}40`,
+                          }}
+                        >
+                          <NotepadText
+                            className="h-5 w-5"
+                            style={{ color: subject.color }}
+                          />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">
+                            {subject.title} Review
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {subject.title}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">
+                          {moment(getEarliestNextReviewDate(subject)).format(
+                            "hh:mm A",
+                          )}
+                        </p>
+                        {isSubjectOverdue(subject) ? (
+                          <Badge variant="destructive">Overdue</Badge>
+                        ) : (
+                          <></>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
             </CardContent>
           </Card>
 
           {/* Quick Stats */}
-          <Card>
+          <Card className="h-[445px]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
@@ -243,7 +272,7 @@ export default function DashboardPage() {
               <div>
                 <div className="mb-2 flex justify-between text-sm">
                   <span>Weekly Progress</span>
-                  <span>73%</span>
+                  <span>{completedSessionsPercentage}%</span>
                 </div>
                 <Progress value={73} className="h-2" />
               </div>
@@ -251,9 +280,14 @@ export default function DashboardPage() {
               <div>
                 <div className="mb-2 flex justify-between text-sm">
                   <span>Cards Due Today</span>
-                  <span>42</span>
+                  <span>{dueTodayCards}</span>
                 </div>
-                <Progress value={60} className="h-2" />
+                <Progress
+                  value={Math.floor(
+                    ((todayCards - dueTodayCards) / todayCards) * 100,
+                  )}
+                  className="h-2"
+                />
               </div>
 
               <div>
@@ -266,28 +300,32 @@ export default function DashboardPage() {
 
               <div className="border-t pt-4">
                 <h4 className="mb-3 font-medium">Active Subjects</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                      <span className="text-sm">Physics</span>
-                    </div>
-                    <Badge variant="secondary">156 cards</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                      <span className="text-sm">Mathematics</span>
-                    </div>
-                    <Badge variant="secondary">89 cards</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-purple-500"></div>
-                      <span className="text-sm">Chemistry</span>
-                    </div>
-                    <Badge variant="secondary">124 cards</Badge>
-                  </div>
+                <div className="max-h-[120px] space-y-2 overflow-auto">
+                  {(activeSubjects?.length ?? 0) > 0 ? (
+                    activeSubjects?.map((subject, index) => {
+                      return (
+                        <div
+                          className="flex items-center justify-between"
+                          key={index}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="h-3 w-3 rounded-full"
+                              style={{ backgroundColor: subject.color }}
+                            ></div>
+                            <span className="text-sm">{subject.title}</span>
+                          </div>
+                          <Badge variant="secondary">
+                            {subject.flashcards.length} cards
+                          </Badge>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      No active subjects
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>

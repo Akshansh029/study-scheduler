@@ -132,14 +132,14 @@ export const reviewRouter = createTRPCRouter({
         interval = 1;
       }
 
-      // Update ease factor based on quality
+      // Ease factor based on quality
       easeFactor = Math.max(
         1.3,
         easeFactor +
           (0.1 - (5 - input.quality) * (0.08 + (5 - input.quality) * 0.02)),
       );
 
-      // Calculate next review date
+      // Next review date
       const nextReviewDate = new Date();
       nextReviewDate.setDate(nextReviewDate.getDate() + interval);
 

@@ -51,7 +51,6 @@ export interface Subject {
   title: string;
   color: string;
   createdAt: Date;
-  updatedAt: Date;
   userId: string;
 }
 

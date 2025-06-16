@@ -199,8 +199,6 @@ export const sessionRouter = createTRPCRouter({
 
   sessionStats: protectedProcedure.query(async ({ ctx }) => {
     const today = new Date();
-
-    // Fix: Set Monday as start of week (ISO week)
     const weekStart = moment().startOf("isoWeek").toDate(); // Monday
     const weekEnd = moment().endOf("isoWeek").toDate(); // Sunday
 
@@ -224,6 +222,8 @@ export const sessionRouter = createTRPCRouter({
       select: {
         startTime: true,
         endTime: true,
+        nextSessionDate: true,
+        nextSessionEndDate: true,
         recurrence: true,
         status: true,
       },
@@ -286,7 +286,7 @@ export const sessionRouter = createTRPCRouter({
       return acc;
     }, 0);
 
-    const totalMinutes = Math.floor(totalStudyTimeMsToday / (1000 * 60));
+    const totalMinutes = Math.round(totalStudyTimeMsToday / (1000 * 60));
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
 
@@ -304,7 +304,7 @@ export const sessionRouter = createTRPCRouter({
       return acc + (session.endTime.getTime() - session.startTime.getTime());
     }, 0);
 
-    const totalMinutesWeek = Math.floor(totalStudyTimeMsWeek / (1000 * 60));
+    const totalMinutesWeek = Math.round(totalStudyTimeMsWeek / (1000 * 60));
     const weekHrs = Math.floor(totalMinutesWeek / 60);
     const weekMins = totalMinutesWeek % 60;
 

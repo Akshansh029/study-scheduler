@@ -32,6 +32,8 @@ import FadeLoader from "react-spinners/FadeLoader";
 import type { FormInput, Subject } from "@/types";
 import SubjectHeader from "@/components/subject-header";
 import TopHeader from "@/components/TopHeader";
+import { Badge } from "@/components/ui/badge";
+import { getEarliestNextReviewDate } from "utils/utils";
 
 const colorOptions = [
   { name: "Indigo", value: "#4F46E5", bg: "bg-indigo-500" },
@@ -160,7 +162,7 @@ export default function SubjectsPage() {
               {subjects?.map((subject) => (
                 <Card
                   key={subject.id}
-                  className="transition-shadow hover:shadow-lg"
+                  className="gap-0 transition-shadow hover:shadow-lg"
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -202,7 +204,7 @@ export default function SubjectsPage() {
                       <div>
                         <div className="text-gray-600">Cards</div>
                         <div className="font-semibold">
-                          {/* {subject.cardCount ?? 0} */}0
+                          {subject.flashcards.length ?? 0}
                         </div>
                       </div>
                       <div>
@@ -214,42 +216,13 @@ export default function SubjectsPage() {
                       </div>
                     </div>
 
-                    {/* {subject.lastStudied && (
-                        <div className="text-sm">
-                        <div className="text-gray-600">Last studied</div>
-                        <div className="font-semibold">
-                        {subject.lastStudied.toLocaleDateString()}
-                        </div>
-                        </div>
-                  )} */}
-
-                    {/* {subject.nextReview && (
-                    <div className="flex items-center gap-2">
-                      <Badge
-                      variant={
-                          subject.nextReview <= new Date()
-                          ? "destructive"
-                            : "secondary"
-                            }
-                        className="text-xs"
-                        >
-                        {subject.nextReview <= new Date()
-                        ? "Due Now"
-                        : "Upcoming"}
-                      </Badge>
-                      <span className="text-xs text-gray-600">
-                      {subject.nextReview.toLocaleDateString()}
-                      </span>
+                    <div className="text-sm">
+                      <div className="text-gray-600">Next Review</div>
+                      <div className="font-semibold">
+                        {getEarliestNextReviewDate(subject)
+                          ? getEarliestNextReviewDate(subject)
+                          : "-"}
                       </div>
-                  )} */}
-
-                    <div className="flex gap-2 pt-2">
-                      <Button size="sm" className="flex-1">
-                        Study Now
-                      </Button>
-                      <Button size="sm" variant="outline" className="flex-1">
-                        Add Cards
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -268,12 +241,6 @@ export default function SubjectsPage() {
           }
         }}
       >
-        {/* <DialogTrigger asChild>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Subject
-              </Button>
-            </DialogTrigger> */}
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Create New Subject</DialogTitle>

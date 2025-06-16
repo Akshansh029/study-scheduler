@@ -6,7 +6,12 @@ import React from "react";
 
 const SubjectHeader = () => {
   const { data: subjects, isLoading } = api.subject.subjectStats.useQuery();
+  const { data: cardStats, isLoading: isPending } =
+    api.flashcard.stats.useQuery();
   const length = subjects?.subLength ?? 0;
+  const dueCards = cardStats?.dueToday ?? 0;
+  const totalCards = cardStats?.totalFlashcards ?? 0;
+
   return (
     <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-4">
       <Card>
@@ -27,7 +32,7 @@ const SubjectHeader = () => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {/* {subjects.reduce((sum, s) => sum + (s.cardCount ?? 0), 0)} */}0
+            {isPending ? "-" : totalCards}
           </div>
           <p className="text-muted-foreground text-xs">Across all subjects</p>
         </CardContent>
@@ -39,7 +44,7 @@ const SubjectHeader = () => {
           <Calendar className="text-muted-foreground h-4 w-4" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">42</div>
+          <div className="text-2xl font-bold">{isPending ? "-" : dueCards}</div>
           <p className="text-muted-foreground text-xs">Cards to review</p>
         </CardContent>
       </Card>

@@ -33,6 +33,14 @@ export const subjectRouter = createTRPCRouter({
         userId: ctx.user.userId!,
       },
       orderBy: { createdAt: "desc" },
+      select: {
+        title: true,
+        color: true,
+        id: true,
+        createdAt: true,
+        userId: true,
+        flashcards: true,
+      },
     });
   }),
 

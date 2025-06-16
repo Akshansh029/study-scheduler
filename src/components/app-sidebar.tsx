@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "./ui/button";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 // Menu items for main navigation
 const mainItems = [
@@ -36,62 +38,31 @@ const mainItems = [
     title: "Dashboard",
     url: "/dashboard",
     icon: Home,
-    badge: null,
   },
   {
     title: "Schedule",
     url: "/dashboard/schedule",
     icon: Calendar,
-    badge: "3",
   },
   {
     title: "Subjects",
     url: "/dashboard/subjects",
     icon: BookOpen,
-    badge: null,
   },
   {
     title: "Sessions",
     url: "/dashboard/sessions",
     icon: Clock,
-    badge: null,
   },
   {
     title: "Flashcard",
     url: "/dashboard/flashcards",
     icon: NotepadText,
-    badge: null,
   },
   {
     title: "Review",
     url: "/dashboard/review",
     icon: Brain,
-    badge: "24",
-  },
-  {
-    title: "Analytics",
-    url: "/dashboard/analytics",
-    icon: BarChart3,
-    badge: null,
-  },
-];
-
-// Quick actions
-const quickActions = [
-  {
-    title: "New Flashcard",
-    url: "/dashboard/flashcards/new",
-    icon: Plus,
-  },
-  {
-    title: "New Session",
-    url: "/dashboard/review/quick",
-    icon: Plus,
-  },
-  {
-    title: "New Subject",
-    url: "/dashboard/review/quick",
-    icon: Plus,
   },
 ];
 
@@ -110,6 +81,10 @@ const settingsItems = [
 ];
 
 export function AppSidebar() {
+  const [selected, setSelected] = useState(() => {
+    const selectedItem = localStorage.getItem("sidebarItem");
+    return selectedItem ?? "Dashboard";
+  });
   const { user } = useUser();
 
   return (
@@ -136,15 +111,17 @@ export function AppSidebar() {
             <SidebarMenu>
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton
+                    onClick={() => {
+                      setSelected(item.title);
+                      localStorage.setItem("sidebarItem", item.title);
+                    }}
+                    className={cn(selected === item.title ? "bg-zinc-100" : "")}
+                    asChild
+                  >
                     <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
-                      {item.badge && (
-                        <Badge variant="secondary" className="ml-auto">
-                          {item.badge}
-                        </Badge>
-                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -154,25 +131,6 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarSeparator />
-
-        {/* Quick Actions */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {quickActions.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Button variant="outline">
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-sidebar-border border-t bg-white">

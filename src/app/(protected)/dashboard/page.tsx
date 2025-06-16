@@ -45,7 +45,6 @@ export default function DashboardPage() {
   const { data: allTodos } = api.todo.getAllTodos.useQuery();
   const createTodoMutation = api.todo.createTodo.useMutation({
     onSuccess: () => {
-      // toast.success("Todo created successfully");
       void refetch();
     },
     onError: () => {
@@ -166,7 +165,7 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[385px] space-y-4 overflow-auto">
-              {(activeSubjects?.length ?? 0) <= 0 ||
+              {(subjectsWithDueCards?.length ?? 0) <= 0 &&
               (allSessions?.length ?? 0) <= 0 ? (
                 <div className="flex h-full w-full items-center justify-center gap-2">
                   <p className="text-base text-gray-600">
@@ -285,7 +284,7 @@ export default function DashboardPage() {
                   <span>Weekly Progress</span>
                   <span>{completedSessionsPercentage}%</span>
                 </div>
-                <Progress value={73} className="h-2" />
+                <Progress value={completedSessionsPercentage} className="h-2" />
               </div>
 
               <div>

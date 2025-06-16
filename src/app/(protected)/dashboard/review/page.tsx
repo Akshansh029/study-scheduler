@@ -41,6 +41,9 @@ export default function ReviewPage() {
   const subjectsWithDueCards = subjectWithCards?.filter((subject) =>
     isSubjectOverdue(subject),
   );
+  const subjectsWithoutDueCards = subjectWithCards?.filter(
+    (subject) => !isSubjectOverdue(subject),
+  );
 
   if (totalDue === 0 && !isLoading) {
     return (
@@ -113,7 +116,7 @@ export default function ReviewPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {subjectsWithDueCards?.length === 0 && !isLoading ? (
+                {subjectStats?.length === 0 && !isLoading ? (
                   <div className="py-12 text-center">
                     <Brain className="mx-auto mb-4 h-16 w-16 text-gray-400" />
                     <h3 className="mb-2 text-lg font-semibold text-gray-900">
@@ -124,59 +127,114 @@ export default function ReviewPage() {
                     </p>
                   </div>
                 ) : (
-                  subjectStats.map((stat) => (
-                    <Card
-                      key={stat.id}
-                      className="rounded-sm px-4 py-0 transition-shadow hover:shadow-md"
-                    >
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div
-                              className="h-6 w-6 rounded-full"
-                              style={{ backgroundColor: stat.color }}
-                            />
-                            <div>
-                              <h3 className="font-semibold text-gray-900">
-                                {stat.title}
-                              </h3>
-                              <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
-                                <span>
-                                  {stat.flashcards.length} total cards
-                                </span>
+                  <>
+                    {subjectsWithDueCards?.map((stat) => (
+                      <Card
+                        key={stat.id}
+                        className="rounded-sm px-4 py-0 transition-shadow hover:shadow-md"
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div
+                                className="h-6 w-6 rounded-full"
+                                style={{ backgroundColor: stat.color }}
+                              />
+                              <div>
+                                <h3 className="font-semibold text-gray-900">
+                                  {stat.title}
+                                </h3>
+                                <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
+                                  <span>
+                                    {stat.flashcards.length} total cards
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="text-right">
-                              <div className="flex items-center gap-2">
-                                {isSubjectOverdue(stat) && (
-                                  <Badge
-                                    variant="destructive"
-                                    className="text-sm"
-                                  >
-                                    Overdue
-                                  </Badge>
-                                )}
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <div className="flex items-center gap-2">
+                                  {isSubjectOverdue(stat) && (
+                                    <Badge
+                                      variant="destructive"
+                                      className="text-sm"
+                                    >
+                                      Overdue
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="mt-1 text-xs text-gray-500">
+                                  Next: {getEarliestNextReviewDate(stat)}
+                                </div>
                               </div>
-                              <div className="mt-1 text-xs text-gray-500">
-                                Next: {getEarliestNextReviewDate(stat)}
+                              <Button
+                                asChild
+                                className="bg-indigo-600 hover:bg-indigo-700"
+                              >
+                                <Link href={`/dashboard/review/${stat.id}`}>
+                                  <Play className="mr-2 h-4 w-4" />
+                                  Start Review
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {subjectsWithoutDueCards?.map((stat) => (
+                      <Card
+                        key={stat.id}
+                        className="rounded-sm px-4 py-0 transition-shadow hover:shadow-md"
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div
+                                className="h-6 w-6 rounded-full"
+                                style={{ backgroundColor: stat.color }}
+                              />
+                              <div>
+                                <h3 className="font-semibold text-gray-900">
+                                  {stat.title}
+                                </h3>
+                                <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
+                                  <span>
+                                    {stat.flashcards.length} total cards
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                            <Button
-                              asChild
-                              className="bg-indigo-600 hover:bg-indigo-700"
-                            >
-                              <Link href={`/dashboard/review/${stat.id}`}>
-                                <Play className="mr-2 h-4 w-4" />
-                                Start Review
-                              </Link>
-                            </Button>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <div className="flex items-center gap-2">
+                                  {isSubjectOverdue(stat) && (
+                                    <Badge
+                                      variant="destructive"
+                                      className="text-sm"
+                                    >
+                                      Overdue
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="mt-1 text-xs text-gray-500">
+                                  Next: {getEarliestNextReviewDate(stat)}
+                                </div>
+                              </div>
+                              <Button
+                                asChild
+                                className="bg-indigo-600 hover:bg-indigo-700"
+                              >
+                                <Link href={`/dashboard/review/${stat.id}`}>
+                                  <Play className="mr-2 h-4 w-4" />
+                                  Start Review
+                                </Link>
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </>
                 )}
               </div>
             </CardContent>

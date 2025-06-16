@@ -47,7 +47,7 @@ const ActiveSessionPage = () => {
 
   const updateStatusMutation = api.session.updateStatus.useMutation({
     onError: (err) => {
-      console.log(err);
+      console.error(err);
       toast.error(`Failed to record session status`);
     },
   });
@@ -126,6 +126,7 @@ const ActiveSessionPage = () => {
         updateSessionDateMutation.mutate({
           sessionId: session.id,
           startTime: session.startTime,
+          endTime: session.endTime,
           recurrence: session?.recurrence,
           nextSessionDate: session.nextSessionDate,
         });

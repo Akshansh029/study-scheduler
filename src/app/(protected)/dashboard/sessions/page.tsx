@@ -22,15 +22,7 @@ export default function StudySessionsPage() {
 
   useEffect(() => {
     if (sessionData) {
-      const startOfDay = moment().startOf("day").toDate();
-      const endOfDay = moment().endOf("day").toDate();
-
-      const todaySessions = sessionData.filter(
-        (session) =>
-          session.nextSessionDate >= startOfDay &&
-          session.nextSessionDate <= endOfDay,
-      );
-      setSessions(todaySessions as StudySession[]);
+      setSessions(sessionData as StudySession[]);
     }
   }, [sessionData]);
 
@@ -92,7 +84,7 @@ export default function StudySessionsPage() {
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle>Scheduled Sessions for today</CardTitle>
+                <CardTitle>Scheduled Sessions</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="min-h-full space-y-4">
@@ -129,6 +121,7 @@ export default function StudySessionsPage() {
                                 </p>
                                 <div className="mt-1 flex gap-2 text-sm text-gray-500">
                                   <p>
+                                    Next session:{" "}
                                     {moment(session.nextSessionDate).format(
                                       "ddd, DD/MM/yyyy",
                                     )}

@@ -72,8 +72,6 @@ export default function SchedulePage() {
     onError: (err) => toast.error(err.message),
   });
 
-  const updateStatusMutation = api.session.updateStatus.useMutation();
-
   const deleteMutation = api.session.deleteSession.useMutation({
     onSuccess: () => {
       toast.success("Session deleted");
@@ -119,16 +117,6 @@ export default function SchedulePage() {
     end: s.endTime,
     resource: s,
   }));
-
-  // Correct signature:
-  const eventPropGetter = (event: CalEvent) => ({
-    style: {
-      backgroundColor: event.resource.subject.color,
-      borderRadius: 4,
-      color: "white",
-      border: 0,
-    },
-  });
 
   function openCreate() {
     setEditing(null);
@@ -251,7 +239,6 @@ export default function SchedulePage() {
                   }));
                   openCreate();
                 }}
-                eventPropGetter={eventPropGetter}
                 isLoading={isPending}
               />
             </TabsContent>

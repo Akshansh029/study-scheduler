@@ -26,6 +26,7 @@ export const sessionRouter = createTRPCRouter({
           subjectId: input.subjectId,
           userId: ctx.user.userId!,
           nextSessionDate: input.startTime,
+          nextSessionEndDate: input.endTime,
         },
       });
     }),
@@ -127,27 +128,32 @@ export const sessionRouter = createTRPCRouter({
       z.object({
         sessionId: z.string(),
         startTime: z.date(),
+        endTime: z.date(),
         recurrence: z.string(),
         nextSessionDate: z.date(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       let mNext = moment(input.startTime);
+      let endNext = moment(input.endTime);
 
       if (input.recurrence === "daily") {
         mNext = mNext.clone().add(1, "day");
+        endNext = endNext.clone().add(1, "day");
       } else if (input.recurrence === "weekly") {
         mNext = mNext.clone().add(1, "week");
+        endNext = endNext.clone().add(1, "week");
       } else if (input.recurrence === "monthly") {
         mNext = mNext.clone().add(1, "month");
+        endNext = endNext.clone().add(1, "month");
       }
 
       return await ctx.db.studySession.update({
         where: { id: input.sessionId },
         data: {
-          startTime: input.nextSessionDate,
           nextSessionDate: mNext.toDate(),
-          status: "upcoming",
+          nextSessionEndDate: endNext.toDate(),
+          // status: "upcoming",
         },
       });
     }),

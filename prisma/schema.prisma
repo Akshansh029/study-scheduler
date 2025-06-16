@@ -38,16 +38,17 @@ model Subject {
 }
 
 model StudySession {
-    id              String   @id @default(cuid())
-    createdAt       DateTime @default(now())
-    updatedAt       DateTime @updatedAt
-    title           String
-    description     String?
-    startTime       DateTime
-    endTime         DateTime
-    recurrence      String?  @default("none") // enum
-    nextSessionDate DateTime
-    status          String   @default("upcoming")
+    id                 String   @id @default(cuid())
+    createdAt          DateTime @default(now())
+    updatedAt          DateTime @updatedAt
+    title              String
+    description        String?
+    startTime          DateTime
+    endTime            DateTime
+    recurrence         String?  @default("none") // enum
+    nextSessionDate    DateTime
+    nextSessionEndDate DateTime
+    status             String   @default("upcoming")
 
     user      User     @relation(fields: [userId], references: [id])
     userId    String

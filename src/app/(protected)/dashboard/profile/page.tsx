@@ -34,19 +34,7 @@ import TopHeader from "@/components/TopHeader";
 import Image from "next/image";
 import { api } from "@/trpc/react";
 import useRefetch from "hooks/use-refetch";
-
-// Mock user data based on your schema
-interface UserProfile {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  emailAddress: string;
-  message: string;
-  firstName?: string;
-  lastName?: string;
-  imageUrl?: string;
-  todo: { id: string }[];
-}
+import { SignOutButton } from "@clerk/nextjs";
 
 export default function ProfilePage() {
   const [isEditingMessage, setIsEditingMessage] = useState(false);
@@ -67,6 +55,16 @@ export default function ProfilePage() {
     },
   });
 
+  const changeImgUrlMutation = api.user.changeImage.useMutation({
+    onSuccess: () => {
+      toast.success("Profile picture changed successfully");
+      void refetch();
+    },
+    onError: () => {
+      toast.error("Could not change profile picture, try later");
+    },
+  });
+
   const handleSaveMessage = () => {
     if (!editMessage) {
       toast.error("Message cannot be empty");
@@ -81,14 +79,21 @@ export default function ProfilePage() {
   };
 
   const handleSaveImage = () => {
-    // TODO: Call tRPC mutation to update user image
+    if (!editImageUrl) {
+      toast.error("Choose a file or paste a link");
+      return;
+    }
+    changeImgUrlMutation.mutate({
+      userId: userData!.id,
+      imageUrl: editImageUrl,
+    });
+    setEditImageUrl("");
+    setIsEditingImage(false);
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // TODO: Upload to your preferred storage (Vercel Blob, Cloudinary, etc.)
-      // For now, we'll use a placeholder
       const reader = new FileReader();
       reader.onload = (e) => {
         setEditImageUrl(e.target?.result as string);
@@ -140,6 +145,7 @@ export default function ProfilePage() {
           <Card className="w-full max-w-4xl">
             <CardContent className="p-8">
               <div className="flex flex-col gap-8 lg:flex-row">
+                {/* Left column */}
                 <div className="flex flex-col items-center space-y-6 lg:w-1/2 lg:items-start">
                   {/* Profile Image */}
                   <div className="relative">
@@ -217,13 +223,20 @@ export default function ProfilePage() {
                         </div>
                         <DialogFooter>
                           <Button
+                            onClick={handleSaveImage}
+                            disabled={changeImgUrlMutation.status === "pending"}
+                            className="cursor-pointer"
+                          >
+                            {changeImgUrlMutation.status === "pending"
+                              ? "Saving"
+                              : "Save Changes"}
+                          </Button>
+                          <Button
                             variant="outline"
                             onClick={() => setIsEditingImage(false)}
+                            className="cursor-pointer"
                           >
                             Cancel
-                          </Button>
-                          <Button onClick={handleSaveImage}>
-                            Save Changes
                           </Button>
                         </DialogFooter>
                       </DialogContent>
@@ -293,6 +306,9 @@ export default function ProfilePage() {
                         </Button>
                       </div>
                     )}
+                  </div>
+                  <div className="rounded-md bg-red-500 px-4 py-2 text-sm text-white">
+                    <SignOutButton />
                   </div>
                 </div>
 

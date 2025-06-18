@@ -1,14 +1,12 @@
 "use client";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { SignOutButton, UserButton, useUser } from "@clerk/nextjs";
 import {
   Calendar,
   Home,
   BookOpen,
   Brain,
-  BarChart3,
   Settings,
   User,
-  Plus,
   Clock,
   NotepadText,
 } from "lucide-react";
@@ -27,10 +25,10 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "./ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { api } from "@/trpc/react";
 
 // Menu items for main navigation
 const mainItems = [
@@ -85,7 +83,32 @@ export function AppSidebar() {
     const selectedItem = localStorage.getItem("sidebarItem");
     return selectedItem ?? "Dashboard";
   });
-  const { user } = useUser();
+
+  const { data: userData, isLoading } = api.user.getUserDetails.useQuery();
+
+  const getDisplayName = () => {
+    if (isLoading) {
+      return "--";
+    } else {
+      if (userData?.firstName && userData?.lastName) {
+        return `${userData?.firstName} ${userData?.lastName}`;
+      }
+      if (userData?.firstName) {
+        return userData?.firstName;
+      }
+      return userData?.emailAddress.split("@")[0];
+    }
+  };
+
+  const getInitials = () => {
+    if (userData?.firstName && userData?.lastName) {
+      return `${userData?.firstName[0]}${userData?.lastName[0]}`.toUpperCase();
+    }
+    if (userData?.firstName) {
+      return userData?.firstName ? userData?.firstName[0]!.toUpperCase() : "";
+    }
+    return userData?.emailAddress[0]!.toUpperCase();
+  };
 
   return (
     <Sidebar variant="inset" className="bg-white">
@@ -149,9 +172,28 @@ export function AppSidebar() {
 
         <div className="px-2 py-2">
           <div className="bg-sidebar-accent flex items-center gap-2 rounded-lg px-2 py-2">
-            <div className="flex flex-1 items-center gap-3 text-sm">
-              <UserButton />
-              <div className="font-medium">{user?.fullName}</div>
+            <div className="flex flex-1 items-center gap-3">
+              <div className="to-pur9le-900 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500">
+                {userData?.imageUrl ? (
+                  <Image
+                    src={userData?.imageUrl ?? "/placeholder.svg"}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                    height={9}
+                    width={9}
+                  />
+                ) : (
+                  <span className="text-4xl font-bold text-white">
+                    {getInitials()}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col items-end">
+                <div className="text-sm font-semibold">{getDisplayName()}</div>
+                <div className="rounded-md px-2 py-1 text-xs text-red-500">
+                  <SignOutButton />
+                </div>
+              </div>
             </div>
           </div>
         </div>

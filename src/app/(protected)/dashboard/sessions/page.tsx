@@ -31,8 +31,9 @@ export default function StudySessionsPage() {
     const now = new Date();
     if (session.status === "completed") return "completed";
     if (session.status === "in-progress") return "in-progress";
-    if (now >= session.startTime && now <= session.endTime) return "due-now";
-    if (now > session.endTime) return "overdue";
+    if (now >= session.nextSessionDate && now <= session.nextSessionEndDate)
+      return "due-now";
+    if (now > session.nextSessionEndDate) return "overdue";
     return "upcoming";
   }, []);
 

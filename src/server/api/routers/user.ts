@@ -42,4 +42,26 @@ export const userRouter = createTRPCRouter({
         },
       });
     }),
+
+  changeImage: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        imageUrl: z
+          .string()
+          .url()
+          .optional()
+          .or(z.string().startsWith("data:image/").optional()),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.user.update({
+        where: {
+          id: input.userId,
+        },
+        data: {
+          imageUrl: input.imageUrl,
+        },
+      });
+    }),
 });

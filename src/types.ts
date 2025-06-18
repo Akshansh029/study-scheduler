@@ -5,6 +5,7 @@ export interface StudySession {
   endTime: Date;
   subjectId: string;
   nextSessionDate: Date;
+  nextSessionEndDate: Date;
   subject: { id: string; title: string; color: string };
   recurrence?: string | null;
   description?: string | null;

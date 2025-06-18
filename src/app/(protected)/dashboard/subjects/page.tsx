@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -32,7 +30,6 @@ import FadeLoader from "react-spinners/FadeLoader";
 import type { FormInput, Subject } from "@/types";
 import SubjectHeader from "@/components/subject-header";
 import TopHeader from "@/components/TopHeader";
-import { Badge } from "@/components/ui/badge";
 import { getEarliestNextReviewDate } from "@/utils/utils";
 
 const colorOptions = [
@@ -85,7 +82,9 @@ export default function SubjectsPage() {
       toast.success("Subject deleted");
       void refetch();
     },
-    onError: (err) => toast.error(err.message),
+    onError: () => {
+      toast.error("This subject is linked to a session or review");
+    },
   });
 
   const handleEditSubject = (subject: Subject) => {

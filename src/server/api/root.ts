@@ -5,6 +5,7 @@ import { sessionRouter } from "./routers/session";
 import { flashcardRouter } from "./routers/flashcard";
 import { reviewRouter } from "./routers/review";
 import { todoRouter } from "./routers/todo";
+import { userRouter } from "./routers/user";
 
 /**
  * This is the primary router for your server.
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   flashcard: flashcardRouter,
   review: reviewRouter,
   todo: todoRouter,
+  user: userRouter,
 });
 
 // export type definition of API

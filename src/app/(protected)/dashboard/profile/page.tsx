@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import moment from "moment";
 import TopHeader from "@/components/TopHeader";
 import Image from "next/image";
+import { api } from "@/trpc/react";
 
 // Mock user data based on your schema
 interface UserProfile {
@@ -43,15 +44,10 @@ interface UserProfile {
   firstName?: string;
   lastName?: string;
   imageUrl?: string;
-  // Computed stats from relations
-  subjectsCount: number;
-  flashcardsCount: number;
-  sessionsCount: number;
-  reviewLogsCount: number;
-  todosCount: number;
+  todo: { id: string }[];
 }
 
-const mockUser: UserProfile = {
+const mockUser = {
   id: "user_123",
   createdAt: new Date("2024-01-15"),
   updatedAt: new Date("2024-01-20"),
@@ -59,22 +55,21 @@ const mockUser: UserProfile = {
   message: "Consistency is the key to mastery! 🚀",
   firstName: "John",
   lastName: "Student",
-  // imageUrl:
+  imageUrl: "",
   //   "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
   // Stats
-  subjectsCount: 4,
-  flashcardsCount: 156,
-  sessionsCount: 23,
-  reviewLogsCount: 342,
-  todosCount: 8,
+  todos: [{ id: "akkadbakkad" }],
 };
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<UserProfile>(mockUser);
+  const [user, setUser] = useState(mockUser);
   const [isEditingMessage, setIsEditingMessage] = useState(false);
   const [isEditingImage, setIsEditingImage] = useState(false);
-  const [editMessage, setEditMessage] = useState(user.message);
+  const [editMessage, setEditMessage] = useState("");
   const [editImageUrl, setEditImageUrl] = useState(user.imageUrl ?? "");
+
+  const { data: userData, isLoading } = api.user.getUserDetails.useQuery();
+  console.log(userData);
 
   const handleSaveMessage = () => {
     // TODO: Call tRPC mutation to update user message
@@ -104,27 +99,27 @@ export default function ProfilePage() {
   };
 
   const getDisplayName = () => {
-    if (user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`;
+    if (userData?.firstName && userData?.lastName) {
+      return `${userData?.firstName} ${userData?.lastName}`;
     }
-    if (user.firstName) {
-      return user.firstName;
+    if (userData?.firstName) {
+      return userData?.firstName;
     }
-    return user.emailAddress.split("@")[0];
+    return userData?.emailAddress.split("@")[0];
   };
 
   const getInitials = () => {
-    if (user.firstName && user.lastName) {
-      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    if (userData?.firstName && userData?.lastName) {
+      return `${userData?.firstName[0]}${userData?.lastName[0]}`.toUpperCase();
     }
-    if (user.firstName) {
-      return user.firstName ? user.firstName[0]!.toUpperCase() : "";
+    if (userData?.firstName) {
+      return userData?.firstName ? userData?.firstName[0]!.toUpperCase() : "";
     }
-    return user.emailAddress[0]!.toUpperCase();
+    return userData?.emailAddress[0]!.toUpperCase();
   };
 
-  const memberSince = moment(user.createdAt).format("MMMM YYYY");
-  const lastUpdated = moment(user.updatedAt).fromNow();
+  const memberSince = moment(userData?.createdAt).format("MMMM YYYY");
+  const lastUpdated = moment(userData?.updatedAt).fromNow();
 
   return (
     <div className="h-screen bg-gray-50">
@@ -142,9 +137,9 @@ export default function ProfilePage() {
                 {/* Profile Image */}
                 <div className="relative">
                   <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
-                    {user.imageUrl ? (
+                    {userData?.imageUrl ? (
                       <Image
-                        src={user.imageUrl || "/placeholder.svg"}
+                        src={userData?.imageUrl ?? "/placeholder.svg"}
                         alt="Profile"
                         className="h-full w-full object-cover"
                         height={32}
@@ -231,7 +226,7 @@ export default function ProfilePage() {
                   </h2>
                   <div className="mb-4 flex items-center gap-2 text-gray-600">
                     <Mail className="h-4 w-4" />
-                    <span>{user.emailAddress}</span>
+                    <span>{userData?.emailAddress}</span>
                   </div>
                 </div>
 
@@ -255,7 +250,7 @@ export default function ProfilePage() {
                           size="sm"
                           variant="outline"
                           onClick={() => {
-                            setEditMessage(user.message);
+                            // setEditMessage(userData?.message);
                             setIsEditingMessage(false);
                           }}
                         >
@@ -267,7 +262,7 @@ export default function ProfilePage() {
                   ) : (
                     <div className="flex items-start justify-between">
                       <p className="flex-1 font-medium text-indigo-800 italic">
-                        {user.message}
+                        {userData?.message}
                       </p>
                       <Button
                         size="sm"
@@ -297,7 +292,7 @@ export default function ProfilePage() {
                           First Name
                         </Label>
                         <p className="text-gray-900">
-                          {user.firstName ?? "Not set"}
+                          {userData?.firstName ?? "Not set"}
                         </p>
                       </div>
                       <div>
@@ -305,7 +300,7 @@ export default function ProfilePage() {
                           Last Name
                         </Label>
                         <p className="text-gray-900">
-                          {user.lastName ?? "Not set"}
+                          {userData?.lastName ?? "Not set"}
                         </p>
                       </div>
                     </div>
@@ -314,7 +309,7 @@ export default function ProfilePage() {
                         User ID
                       </Label>
                       <p className="font-mono text-sm text-gray-500">
-                        {user.id}
+                        {userData?.id}
                       </p>
                     </div>
                   </div>
@@ -359,7 +354,9 @@ export default function ProfilePage() {
                       <span className="text-sm text-gray-600">
                         Pending todos
                       </span>
-                      <Badge variant="destructive">{user.todosCount}</Badge>
+                      <Badge variant="destructive">
+                        {userData?.Todo.length}
+                      </Badge>
                     </div>
                   </div>
                 </div>

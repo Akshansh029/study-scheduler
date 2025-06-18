@@ -99,7 +99,8 @@ const ActiveSessionPage = () => {
 
   const startTime = session?.startTime;
   const endTime = session?.endTime;
-  const duration = moment(endTime).diff(moment(startTime), "seconds");
+  const ms = moment(endTime).diff(moment(startTime));
+  const durationInSeconds = Math.round(ms / 1000);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -125,10 +126,9 @@ const ActiveSessionPage = () => {
       if (session.recurrence && session.recurrence !== "none") {
         updateSessionDateMutation.mutate({
           sessionId: session.id,
-          startTime: session.startTime,
-          endTime: session.endTime,
           recurrence: session?.recurrence,
           nextSessionDate: session.nextSessionDate,
+          nextSessionEndDate: session.nextSessionEndDate,
         });
       }
 
@@ -231,7 +231,7 @@ const ActiveSessionPage = () => {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="rounded-lg bg-blue-50 p-4">
                     <div className="text-2xl font-bold text-blue-600">
-                      {moment.utc(timeStudied * 1000).format("HH:mm:ss")}
+                      {moment.utc(timeStudied * 1000).format("HH:mm:ss")} hrs
                     </div>
                     <div className="text-sm text-blue-800">
                       Time Studied in app
@@ -239,7 +239,11 @@ const ActiveSessionPage = () => {
                   </div>
                   <div className="rounded-lg bg-orange-50 p-4">
                     <div className="text-2xl font-bold text-orange-600">
-                      {formatTime(duration)} hrs
+                      {/* {formatTime(duration)} hrs */}
+                      {moment
+                        .utc(durationInSeconds * 1000)
+                        .format("HH:mm:ss")}{" "}
+                      hrs
                     </div>
                     <div className="text-sm text-orange-800">
                       Planned Duration
@@ -300,7 +304,7 @@ const ActiveSessionPage = () => {
                     <Clock className="mx-auto mb-2 h-8 w-8 text-blue-500" />
                     <div className="text-lg font-semibold">Study Duration</div>
                     <div className="text-sm text-gray-600">
-                      Planned: {formatTime(duration)} hrs
+                      Planned: {formatTime(durationInSeconds)} hrs
                     </div>
                     <div className="text-sm text-gray-600">
                       Actual:{" "}
@@ -374,7 +378,7 @@ const ActiveSessionPage = () => {
                         <Brain className="h-8 w-8 text-purple-600" />
                       </div>
                       <div className="text-2xl font-bold text-gray-800">
-                        {formatTime(duration)} hrs
+                        {formatTime(durationInSeconds)} hrs
                       </div>
                       <div className="text-sm text-gray-600">
                         Total Duration

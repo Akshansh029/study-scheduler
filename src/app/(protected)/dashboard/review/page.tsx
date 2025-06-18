@@ -11,7 +11,7 @@ import TopHeader from "@/components/TopHeader";
 import FadeLoader from "react-spinners/FadeLoader";
 import ReviewHeader from "@/components/review-header";
 import type { SubjectWithCards } from "@/types";
-import { getEarliestNextReviewDate, isSubjectOverdue } from "utils/utils";
+import { getEarliestNextReviewDate, isSubjectOverdue } from "@/utils/utils";
 
 export default function ReviewPage() {
   const [subjectStats, setSubjectStats] = useState<SubjectWithCards[]>([]);

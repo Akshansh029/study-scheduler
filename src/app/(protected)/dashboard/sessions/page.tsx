@@ -119,25 +119,30 @@ export default function StudySessionsPage() {
                                 <p className="text-sm text-gray-600">
                                   {session.subject.title}
                                 </p>
-                                <div className="mt-1 flex gap-2 text-sm text-gray-500">
-                                  <p>
-                                    Next session:{" "}
-                                    {moment(session.nextSessionDate).format(
-                                      "ddd, DD/MM/yyyy",
-                                    )}
-                                  </p>
-                                  <p>
-                                    {session.startTime.toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}{" "}
-                                    -{" "}
-                                    {session.endTime.toLocaleTimeString([], {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}
-                                  </p>
-                                </div>
+                                {session.recurrence !== "none" && (
+                                  <div className="mt-1 flex gap-2 text-sm text-gray-500">
+                                    <p>
+                                      Next session:{" "}
+                                      {moment(session.nextSessionDate).format(
+                                        "ddd, DD/MM/yyyy",
+                                      )}
+                                    </p>
+                                    <p>
+                                      {session.startTime.toLocaleTimeString(
+                                        [],
+                                        {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        },
+                                      )}{" "}
+                                      -{" "}
+                                      {session.endTime.toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                             </div>
                             <div className="flex items-center gap-4">

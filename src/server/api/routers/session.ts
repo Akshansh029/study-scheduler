@@ -51,6 +51,7 @@ export const sessionRouter = createTRPCRouter({
           recurrence: true,
           status: true,
           nextSessionDate: true,
+          nextSessionEndDate: true,
           subject: {
             select: {
               id: true,
@@ -127,15 +128,14 @@ export const sessionRouter = createTRPCRouter({
     .input(
       z.object({
         sessionId: z.string(),
-        startTime: z.date(),
-        endTime: z.date(),
         recurrence: z.string(),
         nextSessionDate: z.date(),
+        nextSessionEndDate: z.date(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      let mNext = moment(input.startTime);
-      let endNext = moment(input.endTime);
+      let mNext = moment(input.nextSessionDate);
+      let endNext = moment(input.nextSessionEndDate);
 
       if (input.recurrence === "daily") {
         mNext = mNext.clone().add(1, "day");

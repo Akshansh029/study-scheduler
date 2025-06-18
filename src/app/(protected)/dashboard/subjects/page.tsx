@@ -33,7 +33,7 @@ import type { FormInput, Subject } from "@/types";
 import SubjectHeader from "@/components/subject-header";
 import TopHeader from "@/components/TopHeader";
 import { Badge } from "@/components/ui/badge";
-import { getEarliestNextReviewDate } from "utils/utils";
+import { getEarliestNextReviewDate } from "@/utils/utils";
 
 const colorOptions = [
   { name: "Indigo", value: "#4F46E5", bg: "bg-indigo-500" },

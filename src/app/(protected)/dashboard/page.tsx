@@ -26,7 +26,7 @@ import type { StudySession, Todo } from "@/types";
 import TopHeader from "@/components/TopHeader";
 import { api } from "@/trpc/react";
 import moment from "moment";
-import { getEarliestNextReviewDate, isSubjectOverdue } from "utils/utils";
+import { getEarliestNextReviewDate, isSubjectOverdue } from "@/utils/utils";
 import { toast } from "sonner";
 import useRefetch from "hooks/use-refetch";
 import FadeLoader from "react-spinners/FadeLoader";

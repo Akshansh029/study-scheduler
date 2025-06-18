@@ -232,6 +232,7 @@ export const sessionRouter = createTRPCRouter({
     const occurrencesThisWeek: {
       startTime: Date;
       endTime: Date;
+      nextSessionDate: Date;
       status: string;
     }[] = [];
 
@@ -261,6 +262,7 @@ export const sessionRouter = createTRPCRouter({
             startTime: occ,
             endTime: new Date(occ.getTime() + duration),
             status: session.status,
+            nextSessionDate: session.nextSessionDate,
           });
         });
       }
@@ -272,7 +274,8 @@ export const sessionRouter = createTRPCRouter({
 
     const completedSessions = occurrencesThisWeek.filter(
       (s) =>
-        s.status === "completed" && moment(s.startTime).isSame(today, "day"),
+        s.status === "completed" &&
+        moment(s.nextSessionDate).isAfter(today, "day"),
     ).length;
 
     const completedSessionsPercentage = Math.floor(
@@ -315,6 +318,7 @@ export const sessionRouter = createTRPCRouter({
       weekMins,
       todayCount,
       weekCount,
+      completedSessions,
       completedSessionsPercentage,
       completedWeekSessionsPercentage,
     };

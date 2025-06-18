@@ -12,6 +12,7 @@ model User {
     createdAt    DateTime @default(now())
     updatedAt    DateTime @updatedAt
     emailAddress String   @unique
+    message      String   @default("You can do it!")
     firstName    String?
     lastName     String?
     imageUrl     String?

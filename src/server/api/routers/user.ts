@@ -25,5 +25,21 @@ export const userRouter = createTRPCRouter({
     });
   }),
 
-  //   changeMessage: protectedProcedure:
+  changeMessage: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        newMsg: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.user.update({
+        where: {
+          id: input.userId,
+        },
+        data: {
+          message: input.newMsg,
+        },
+      });
+    }),
 });

@@ -45,6 +45,8 @@ const colorOptions = [
 
 export default function SubjectsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState("#4F46E5");
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, reset } = useForm<FormInput>();
@@ -98,9 +100,11 @@ export default function SubjectsPage() {
   };
 
   const handleDeleteSubject = (id: string) => {
-    if (confirm("Are you sure you want to delete this subject?")) {
-      deleteSubject.mutate({ id });
-    }
+    deleteSubject.mutate({
+      id: id,
+    });
+    setIsDeleteDialogOpen(false);
+    setSelectedCardId("");
   };
 
   const onSubmit = (data: FormInput) => {
@@ -188,7 +192,10 @@ export default function SubjectsPage() {
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleDeleteSubject(subject.id)}
+                            onClick={() => {
+                              setSelectedCardId(subject.id);
+                              setIsDeleteDialogOpen(true);
+                            }}
                             className="text-red-600"
                           >
                             <Trash2 className="mr-2 h-4 w-4 text-red-600" />
@@ -294,6 +301,38 @@ export default function SubjectsPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete subject</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Are you sure you want to delete this subject? This action cannot be
+            undone.
+          </DialogDescription>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="destructive"
+              className="cursor-pointer"
+              disabled={deleteSubject.status === "pending"}
+              onClick={() => {
+                handleDeleteSubject(selectedCardId!);
+              }}
+            >
+              Delete
+            </Button>
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

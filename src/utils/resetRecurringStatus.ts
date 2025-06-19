@@ -16,18 +16,19 @@ export const resetRecurringStatuses = async () => {
   });
 
   for (const session of sessions) {
-    const sessionDay = moment(session.startTime).day();
-    const sessionDate = moment(session.startTime).date();
+    // const sessionDay = moment(session.startTime).day();
+    // const sessionDate = moment(session.startTime).date();
 
     let shouldReset = false;
 
-    if (session.recurrence === "daily") {
-      shouldReset = true;
-    } else if (session.recurrence === "weekly" && sessionDay === dayOfWeek) {
-      shouldReset = true;
-    } else if (session.recurrence === "monthly" && sessionDate === dayOfMonth) {
-      shouldReset = true;
-    }
+    // if (session.recurrence === "daily") {
+    //   shouldReset = true;
+    // } else if (session.recurrence === "weekly" && sessionDay === dayOfWeek) {
+    //   shouldReset = true;
+    // } else if (session.recurrence === "monthly" && sessionDate === dayOfMonth) {
+    //   shouldReset = true;
+    // }
+    if (session.recurrence !== "none") shouldReset = true;
 
     if (shouldReset) {
       await db.studySession.update({

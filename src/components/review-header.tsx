@@ -3,41 +3,15 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, CheckCircle, Clock, Target } from "lucide-react";
 import { api } from "@/trpc/react";
-import type { SubjectWithCards } from "@/types";
+import { isSubjectOverdue } from "@/utils/utils";
 
 const ReviewHeader = () => {
   const { data: subjectWithCards, isLoading } =
     api.review.getSubjectWithCards.useQuery();
+  const { data: cardStats } = api.flashcard.stats.useQuery();
 
-  function isSubjectOverdue(subject: SubjectWithCards): boolean {
-    const now = new Date();
-
-    // Earliest nextReviewDate for flashcards
-    const minNextReviewDate = subject.flashcards.reduce<Date | null>(
-      (min, card) => {
-        if (!min || card.nextReviewDate < min) {
-          return card.nextReviewDate;
-        }
-        return min;
-      },
-      null,
-    );
-    return minNextReviewDate !== null && minNextReviewDate < now;
-  }
-
-  // Get total number of cards that are actually due for review
-  const totalDue = subjectWithCards?.reduce((sum, subject) => {
-    const dueCardsCount = subject.flashcards.filter(
-      (card) => new Date(card.nextReviewDate) <= new Date(),
-    ).length;
-    return sum + dueCardsCount;
-  }, 0);
-
-  // Keep totalCards as is (this one was correct)
-  const totalCards = subjectWithCards?.reduce(
-    (sum, subject) => sum + subject.flashcards.length,
-    0,
-  );
+  const dueCards = cardStats?.dueToday ?? 0;
+  const totalCards = cardStats?.totalFlashcards ?? 0;
 
   // Get subjects that have cards due for review (using isSubjectOverdue)
   const subjectsWithDueCards = subjectWithCards?.filter((subject) =>
@@ -52,7 +26,7 @@ const ReviewHeader = () => {
           <Clock className="text-muted-foreground h-4 w-4" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{isLoading ? "-" : totalDue}</div>
+          <div className="text-2xl font-bold">{isLoading ? "-" : dueCards}</div>
           <p className="text-muted-foreground text-xs">
             Cards ready for review
           </p>

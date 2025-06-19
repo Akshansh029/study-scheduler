@@ -18,24 +18,16 @@ export default function ReviewPage() {
 
   const { data: subjectWithCards, isLoading } =
     api.review.getSubjectWithCards.useQuery();
+  const { data: cardStats } = api.flashcard.stats.useQuery();
+
   useEffect(() => {
     if (subjectWithCards) {
       setSubjectStats(subjectWithCards);
     }
   }, [subjectWithCards]);
 
-  // Due cards
-  const totalDue = subjectWithCards?.reduce((sum, subject) => {
-    const dueCardsCount = subject.flashcards.filter(
-      (card) => new Date(card.nextReviewDate) <= new Date(),
-    ).length;
-    return sum + dueCardsCount;
-  }, 0);
-
-  const totalCards = subjectWithCards?.reduce(
-    (sum, subject) => sum + subject.flashcards.length,
-    0,
-  );
+  const dueCards = cardStats?.dueToday ?? 0;
+  const totalCards = cardStats?.totalFlashcards ?? 0;
 
   // subject with due cards
   const subjectsWithDueCards = subjectWithCards?.filter((subject) =>
@@ -45,7 +37,7 @@ export default function ReviewPage() {
     (subject) => !isSubjectOverdue(subject),
   );
 
-  if (totalDue === 0 && !isLoading) {
+  if (dueCards === 0 && !isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <TopHeader

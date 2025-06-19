@@ -84,6 +84,7 @@ export const sessionRouter = createTRPCRouter({
         description: true,
         status: true,
         nextSessionDate: true,
+        nextSessionEndDate: true,
         subject: {
           select: {
             id: true,
@@ -272,7 +273,7 @@ export const sessionRouter = createTRPCRouter({
       moment(s.startTime).isSame(today, "day"),
     ).length;
 
-    const completedSessions = occurrencesThisWeek.filter(
+    const completedSessions = sessions.filter(
       (s) =>
         s.status === "completed" &&
         moment(s.nextSessionDate).isAfter(today, "day"),

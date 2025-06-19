@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import moment from "moment";
 
 export const userRouter = createTRPCRouter({
   getUserDetails: protectedProcedure.query(async ({ ctx }) => {
@@ -64,4 +65,30 @@ export const userRouter = createTRPCRouter({
         },
       });
     }),
+
+  getStreak: protectedProcedure.query(async ({ ctx }) => {
+    const sessions = await ctx.db.studySession.findMany({
+      where: {
+        userId: ctx.user.userId!,
+        status: "completed",
+      },
+      select: {
+        startTime: true,
+      },
+    });
+
+    const completedDays = new Set(
+      sessions.map((s) => moment(s.startTime).format("YYYY-MM-DD")),
+    );
+
+    let streak = 0;
+    const currentDay = moment().startOf("day");
+
+    while (completedDays.has(currentDay.format("YYYY-MM-DD"))) {
+      streak++;
+      currentDay.subtract(1, "day");
+    }
+
+    return streak;
+  }),
 });

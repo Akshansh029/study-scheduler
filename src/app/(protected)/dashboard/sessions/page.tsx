@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 
 export default function StudySessionsPage() {
   const [sessions, setSessions] = useState<StudySession[]>([]);
+  const [isRouting, setIsRouting] = useState(false);
   const router = useRouter();
 
   const { data: sessionData, isPending } =
@@ -22,13 +23,22 @@ export default function StudySessionsPage() {
 
   useEffect(() => {
     if (sessionData) {
-      setSessions(sessionData as StudySession[]);
+      const startOfDay = moment().startOf("day").toDate();
+      const endOfDay = moment().endOf("day").toDate();
+
+      const todaySessions = sessionData.filter(
+        (session) =>
+          session.nextSessionDate >= startOfDay &&
+          session.nextSessionDate <= endOfDay,
+      );
+      setSessions(todaySessions as StudySession[]);
     }
   }, [sessionData]);
 
   // Calculate status without side effects
   const calculateStatus = useCallback((session: StudySession) => {
     const now = new Date();
+
     if (session.status === "completed") return "completed";
     if (session.status === "in-progress") return "in-progress";
     if (now >= session.nextSessionDate && now <= session.nextSessionEndDate)
@@ -97,8 +107,6 @@ export default function StudySessionsPage() {
                     </div>
                   )}
                   {sessions.map((session) => {
-                    const status = calculateStatus(session);
-                    // const status = session.status;
                     return (
                       <Card
                         key={session.id}
@@ -120,41 +128,41 @@ export default function StudySessionsPage() {
                                 <p className="text-sm text-gray-600">
                                   {session.subject.title}
                                 </p>
-                                {session.recurrence !== "none" && (
-                                  <div className="mt-1 flex gap-2 text-sm text-gray-500">
-                                    <p>
-                                      Next session:{" "}
-                                      {moment(session.nextSessionDate).format(
-                                        "ddd, DD/MM/yyyy",
-                                      )}
-                                    </p>
-                                    <p>
-                                      {session.startTime.toLocaleTimeString(
-                                        [],
-                                        {
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        },
-                                      )}{" "}
-                                      -{" "}
-                                      {session.endTime.toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      })}
-                                    </p>
-                                  </div>
-                                )}
+                                <div className="mt-1 flex gap-2 text-sm text-gray-500">
+                                  <p>
+                                    {session.recurrence !== "none"
+                                      ? "Next session:"
+                                      : ""}{" "}
+                                    {moment(session.nextSessionDate).format(
+                                      "ddd, DD/MM/yyyy",
+                                    )}
+                                  </p>
+                                  <p>
+                                    {session.startTime.toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}{" "}
+                                    -{" "}
+                                    {session.endTime.toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </p>
+                                </div>
                               </div>
                             </div>
                             <div className="flex items-center gap-4">
-                              {getStatusBadge(status)}
+                              {getStatusBadge(calculateStatus(session))}
                               <Button
                                 onClick={() => {
+                                  setIsRouting(true);
                                   router.push(
                                     `/dashboard/sessions/${session.id}`,
                                   );
                                 }}
-                                disabled={session.status === "completed"}
+                                disabled={
+                                  session.status === "completed" || isRouting
+                                }
                                 className="flex cursor-pointer items-center rounded-md bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-700"
                               >
                                 <Play className="mr-2 h-4 w-4" />

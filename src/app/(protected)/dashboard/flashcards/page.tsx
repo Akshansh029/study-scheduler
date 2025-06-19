@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Dialog,
   DialogContent,
@@ -48,7 +47,6 @@ import moment from "moment";
 import { api } from "@/trpc/react";
 import FlashcardHeader from "@/components/flashcard-header";
 import useRefetch from "hooks/use-refetch";
-import { set } from "zod";
 import FadeLoader from "react-spinners/FadeLoader";
 import TopHeader from "@/components/TopHeader";
 
@@ -501,8 +499,7 @@ export default function FlashcardsPage() {
                       </div>
                     ) : (
                       filteredFlashcards.map((card) => {
-                        const { status, icon, label } =
-                          getFlashcardStatus(card);
+                        const { icon, label } = getFlashcardStatus(card);
 
                         return (
                           <Card

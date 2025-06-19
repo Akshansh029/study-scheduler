@@ -3,6 +3,7 @@ import { SidebarTrigger } from "./ui/sidebar";
 import { Flame, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { api } from "@/trpc/react";
 
 type TopHeaderProps = {
   functionProp?: () => void;
@@ -17,6 +18,8 @@ const TopHeader = ({
   subtitle,
   buttonText,
 }: TopHeaderProps) => {
+  const { data: streak } = api.user.getStreak.useQuery();
+
   return (
     <header className="border-b bg-white px-6 py-4">
       <div className="flex items-center justify-between">
@@ -33,7 +36,8 @@ const TopHeader = ({
               variant="default"
               className="flex items-center gap-1 px-4 py-2"
             >
-              <Flame className="h-5 w-5 text-yellow-400" />7 day streak
+              <Flame className="h-5 w-5 text-yellow-400" />
+              {streak} day streak
             </Badge>
           )}
           {buttonText && (

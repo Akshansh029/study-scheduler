@@ -74,11 +74,12 @@ export const userRouter = createTRPCRouter({
       },
       select: {
         startTime: true,
+        nextSessionDate: true,
       },
     });
 
     const completedDays = new Set(
-      sessions.map((s) => moment(s.startTime).format("YYYY-MM-DD")),
+      sessions.map((s) => moment(s.nextSessionDate).format("YYYY-MM-DD")),
     );
 
     let streak = 0;

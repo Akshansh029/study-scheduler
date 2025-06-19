@@ -15,6 +15,7 @@ import { getEarliestNextReviewDate, isSubjectOverdue } from "@/utils/utils";
 
 export default function ReviewPage() {
   const [subjectStats, setSubjectStats] = useState<SubjectWithCards[]>([]);
+  const [isRouting, setIsRouting] = useState(false);
 
   const { data: subjectWithCards, isLoading } =
     api.review.getSubjectWithCards.useQuery();
@@ -162,6 +163,8 @@ export default function ReviewPage() {
                               <Button
                                 asChild
                                 className="bg-indigo-600 hover:bg-indigo-700"
+                                disabled={isRouting}
+                                onClick={() => setIsRouting(true)}
                               >
                                 <Link href={`/dashboard/review/${stat.id}`}>
                                   <Play className="mr-2 h-4 w-4" />

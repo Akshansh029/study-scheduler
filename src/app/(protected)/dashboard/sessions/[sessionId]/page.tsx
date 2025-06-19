@@ -51,6 +51,13 @@ const ActiveSessionPage = () => {
       toast.error(`Failed to record session status`);
     },
   });
+
+  const updateDailyStudyMutation = api.user.updateDailyStudy.useMutation({
+    onError: () => {
+      toast.error("Failed to update daily study table");
+    },
+  });
+
   useEffect(() => {
     updateStatusMutation.mutate({
       sessionId: sessionId,
@@ -117,6 +124,7 @@ const ActiveSessionPage = () => {
 
   const endSession = async () => {
     if (!session) return;
+
     try {
       await updateStatusMutation.mutateAsync({
         sessionId,
@@ -134,6 +142,11 @@ const ActiveSessionPage = () => {
 
       const endTime = new Date();
       const startTime = actualStartTimeRef.current;
+
+      await updateDailyStudyMutation.mutateAsync({
+        duration: ms,
+      });
+
       if (startTime) {
         const diff = moment(endTime).diff(moment(startTime), "seconds");
         setTimeStudied(diff);

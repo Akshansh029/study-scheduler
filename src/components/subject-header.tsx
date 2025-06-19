@@ -12,6 +12,9 @@ const SubjectHeader = () => {
   const dueCards = cardStats?.dueToday ?? 0;
   const totalCards = cardStats?.totalFlashcards ?? 0;
 
+  const { data: streakData } = api.user.getStreak.useQuery();
+  const streak = streakData?.streak ?? 0;
+
   return (
     <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-4">
       <Card>
@@ -55,7 +58,9 @@ const SubjectHeader = () => {
           <Target className="text-muted-foreground h-4 w-4" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">7 days</div>
+          <div className="text-2xl font-bold">
+            {streak} {streak > 1 ? `days` : "day"} streak
+          </div>
           <p className="text-muted-foreground text-xs">Keep it up!</p>
         </CardContent>
       </Card>

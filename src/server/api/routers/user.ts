@@ -66,30 +66,54 @@ export const userRouter = createTRPCRouter({
       });
     }),
 
+  updateDailyStudy: protectedProcedure
+    .input(
+      z.object({
+        duration: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const today = moment().startOf("day").toDate();
+      return await ctx.db.dailyStudy.upsert({
+        where: {
+          userId_date: {
+            userId: ctx.user.userId!,
+            date: today,
+          },
+        },
+        create: {
+          userId: ctx.user.userId!,
+          date: today,
+          totalMs: input.duration,
+          sessions: 1,
+        },
+        update: {
+          totalMs: { increment: input.duration },
+          sessions: { increment: 1 },
+        },
+      });
+    }),
+
   getStreak: protectedProcedure.query(async ({ ctx }) => {
-    const sessions = await ctx.db.studySession.findMany({
+    const rows = await ctx.db.dailyStudy.findMany({
       where: {
         userId: ctx.user.userId!,
-        status: "completed",
+        sessions: { gt: 0 },
       },
-      select: {
-        startTime: true,
-        nextSessionDate: true,
-      },
+      select: { date: true },
+      orderBy: { date: "desc" },
     });
 
-    const completedDays = new Set(
-      sessions.map((s) => moment(s.nextSessionDate).format("YYYY-MM-DD")),
+    const doneDays = new Set(
+      rows.map((r) => moment(r.date).format("YYYY-MM-DD")),
     );
 
     let streak = 0;
-    const currentDay = moment().startOf("day");
-
-    while (completedDays.has(currentDay.format("YYYY-MM-DD"))) {
+    let cursor = moment().startOf("day");
+    while (doneDays.has(cursor.format("YYYY-MM-DD"))) {
       streak++;
-      currentDay.subtract(1, "day");
+      cursor = cursor.subtract(1, "day");
     }
-
-    return streak;
+    return { streak };
   }),
 });

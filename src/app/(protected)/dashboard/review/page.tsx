@@ -21,6 +21,9 @@ export default function ReviewPage() {
     api.review.getSubjectWithCards.useQuery();
   const { data: cardStats } = api.flashcard.stats.useQuery();
 
+  const { data: streakData } = api.user.getStreak.useQuery();
+  const streak = streakData?.streak ?? 0;
+
   useEffect(() => {
     if (subjectWithCards) {
       setSubjectStats(subjectWithCards);
@@ -71,7 +74,10 @@ export default function ReviewPage() {
                   </div>
                   <div className="rounded-lg bg-green-50 p-4">
                     <div className="font-semibold text-green-900">Streak</div>
-                    <div className="text-green-700">7 days</div>
+                    <div className="text-green-700">
+                      {" "}
+                      {streak} {streak > 1 ? `days` : "day"} streak
+                    </div>
                   </div>
                   <div className="rounded-lg bg-purple-50 p-4">
                     <div className="font-semibold text-purple-900">

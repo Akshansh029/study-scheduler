@@ -10,6 +10,9 @@ const ReviewHeader = () => {
     api.review.getSubjectWithCards.useQuery();
   const { data: cardStats } = api.flashcard.stats.useQuery();
 
+  const { data: streakData } = api.user.getStreak.useQuery();
+  const streak = streakData?.streak ?? 0;
+
   const dueCards = cardStats?.dueToday ?? 0;
   const totalCards = cardStats?.totalFlashcards ?? 0;
 
@@ -65,7 +68,9 @@ const ReviewHeader = () => {
           <CheckCircle className="text-muted-foreground h-4 w-4" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">7 days</div>
+          <div className="text-2xl font-bold">
+            {streak} {streak > 1 ? `days` : "day"} streak
+          </div>
           <p className="text-muted-foreground text-xs">Keep it going!</p>
         </CardContent>
       </Card>

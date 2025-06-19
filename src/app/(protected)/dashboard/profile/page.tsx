@@ -43,6 +43,9 @@ export default function ProfilePage() {
   const { data: userData, isLoading } = api.user.getUserDetails.useQuery();
   const [editImageUrl, setEditImageUrl] = useState(userData?.imageUrl ?? "");
 
+  const { data: streakData } = api.user.getStreak.useQuery();
+  const streak = streakData?.streak ?? 0;
+
   const refetch = useRefetch();
 
   const updateMsgMutation = api.user.changeMessage.useMutation({
@@ -384,7 +387,8 @@ export default function ProfilePage() {
                           Study streak
                         </span>
                         <Badge className="bg-orange-100 text-orange-800">
-                          <Flame className="mr-1 h-3 w-3" />7 days
+                          <Flame className="mr-1 h-3 w-3" />
+                          {streak} {streak > 1 ? `days` : "day"} streak
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between">

@@ -18,7 +18,8 @@ const TopHeader = ({
   subtitle,
   buttonText,
 }: TopHeaderProps) => {
-  const { data: streak } = api.user.getStreak.useQuery();
+  const { data: streakData } = api.user.getStreak.useQuery();
+  const streak = streakData?.streak ?? 0;
 
   return (
     <header className="border-b bg-white px-6 py-4">
@@ -37,7 +38,7 @@ const TopHeader = ({
               className="flex items-center gap-1 px-4 py-2"
             >
               <Flame className="h-5 w-5 text-yellow-400" />
-              {streak} day streak
+              {streak} {streak > 1 ? `days` : "day"} streak
             </Badge>
           )}
           {buttonText && (

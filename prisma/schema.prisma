@@ -22,6 +22,7 @@ model User {
     flashcards Flashcard[]
     reviewLogs ReviewLog[]
     Todo       Todo[]
+    DailyStudy DailyStudy[]
 }
 
 model Subject {
@@ -94,4 +95,15 @@ model Todo {
     completed Boolean  @default(false)
     userId    String
     user      User     @relation(fields: [userId], references: [id])
+}
+
+model DailyStudy {
+    id       String   @id @default(cuid())
+    userId   String
+    user     User     @relation(fields: [userId], references: [id])
+    date     DateTime
+    totalMs  Int      @default(0) // cumulative study milliseconds
+    sessions Int      @default(0) // number of completed sessions
+
+    @@unique([userId, date])
 }

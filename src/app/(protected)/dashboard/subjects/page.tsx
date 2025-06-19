@@ -50,6 +50,7 @@ export default function SubjectsPage() {
   const [selectedColor, setSelectedColor] = useState("#4F46E5");
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, reset } = useForm<FormInput>();
+  const [isEditing, setIsEditing] = useState(false);
 
   const clerkUser = useUser();
   const refetch = useRefetch();
@@ -68,6 +69,7 @@ export default function SubjectsPage() {
     },
     onError: (err) => {
       toast.error(err.message);
+      setLoading(false);
     },
   });
 
@@ -75,8 +77,13 @@ export default function SubjectsPage() {
     onSuccess: () => {
       toast.success("Subject updated");
       void refetch();
+      setLoading(false);
+      setIsCreateDialogOpen(false);
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err) => {
+      toast.error(err.message);
+      setLoading(false);
+    },
   });
 
   const deleteSubject = api.subject.deleteSubject.useMutation({
@@ -90,13 +97,14 @@ export default function SubjectsPage() {
   });
 
   const handleEditSubject = (subject: Subject) => {
-    const newTitle = prompt("Enter new subject title", subject.title);
-    if (!newTitle) return;
-    updateSubject.mutate({
-      id: subject.id,
-      title: newTitle,
+    setIsEditing(true);
+    setSelectedCardId(subject.id);
+    reset({
+      title: subject.title,
       color: subject.color,
     });
+    setSelectedColor(subject.color);
+    setIsCreateDialogOpen(true);
   };
 
   const handleDeleteSubject = (id: string) => {
@@ -116,6 +124,20 @@ export default function SubjectsPage() {
 
     if (data.title === "") {
       toast.error("Please enter the subject");
+      return;
+    }
+
+    if (isEditing) {
+      if (!selectedCardId) {
+        toast.error("Error: Subject ID missing for edit");
+        setLoading(false);
+        return;
+      }
+      updateSubject.mutate({
+        id: selectedCardId,
+        title: data.title,
+        color: selectedColor ?? data.color,
+      });
       return;
     }
 
@@ -216,7 +238,6 @@ export default function SubjectsPage() {
                       <div>
                         <div className="text-gray-600">Created</div>
                         <div className="font-semibold">
-                          {/* {format(subject.createdAt, "PPP")} */}
                           {moment(subject.createdAt).format("MMM D, YYYY")}
                         </div>
                       </div>
@@ -241,22 +262,28 @@ export default function SubjectsPage() {
         open={isCreateDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
-            setIsCreateDialogOpen(false);
             reset();
+            setIsCreateDialogOpen(false);
+            setIsEditing(false);
+            setSelectedCardId(null);
             setSelectedColor("#4F46E5");
           }
         }}
       >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Create New Subject</DialogTitle>
+            <DialogTitle>
+              {isEditing ? "Edit subject" : "Create New Subject"}
+            </DialogTitle>
             <DialogDescription>
-              Add a new subject to organize your study materials.
+              {isEditing
+                ? "Edit your subject"
+                : "Add a new subject to organize your study materials."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">Subject Name</Label>
+              <Label htmlFor="title">New Subject Name</Label>
               <Input
                 id="title"
                 placeholder="e.g., Physics, Mathematics, History"
@@ -292,13 +319,23 @@ export default function SubjectsPage() {
               >
                 Cancel
               </Button>
-              <Button
-                className="cursor-pointer"
-                type="submit"
-                disabled={loading}
-              >
-                {loading ? "Creating" : "Create Subject"}
-              </Button>
+              {isEditing ? (
+                <Button
+                  className="cursor-pointer"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading ? "Saving" : "Edit Subject"}
+                </Button>
+              ) : (
+                <Button
+                  className="cursor-pointer"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading ? "Creating" : "Create Subject"}
+                </Button>
+              )}
             </DialogFooter>
           </form>
         </DialogContent>

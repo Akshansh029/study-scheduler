@@ -18,6 +18,9 @@ export const userRouter = createTRPCRouter({
         lastName: true,
         imageUrl: true,
         Todo: {
+          where: {
+            completed: false,
+          },
           select: {
             id: true,
           },

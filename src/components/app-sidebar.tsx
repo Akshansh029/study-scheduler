@@ -1,11 +1,10 @@
 "use client";
-import { SignOutButton, UserButton, useUser } from "@clerk/nextjs";
+import { SignOutButton } from "@clerk/nextjs";
 import {
   Calendar,
   Home,
   BookOpen,
   Brain,
-  Settings,
   User,
   Clock,
   NotepadText,
@@ -66,11 +65,6 @@ const mainItems = [
 
 // Settings items
 const settingsItems = [
-  {
-    title: "Preferences",
-    url: "/dashboard/settings",
-    icon: Settings,
-  },
   {
     title: "Profile",
     url: "/dashboard/profile",
@@ -160,7 +154,14 @@ export function AppSidebar() {
         <SidebarMenu>
           {settingsItems.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
+              <SidebarMenuButton
+                onClick={() => {
+                  setSelected(item.title);
+                  localStorage.setItem("sidebarItem", item.title);
+                }}
+                className={cn(selected === item.title ? "bg-zinc-100" : "")}
+                asChild
+              >
                 <Link href={item.url}>
                   <item.icon />
                   <span>{item.title}</span>

@@ -329,7 +329,7 @@ export default function ProfilePage() {
                           <Label className="text-sm font-medium text-gray-600">
                             First Name
                           </Label>
-                          <p className="text-gray-900">
+                          <p className="font-medium text-gray-900">
                             {isLoading ? "-" : userData?.firstName}
                           </p>
                         </div>
@@ -337,7 +337,7 @@ export default function ProfilePage() {
                           <Label className="text-sm font-medium text-gray-600">
                             Last Name
                           </Label>
-                          <p className="text-gray-900">
+                          <p className="font-medium text-gray-900">
                             {isLoading ? "-" : userData?.lastName}
                           </p>
                         </div>

@@ -111,8 +111,12 @@ export const userRouter = createTRPCRouter({
       rows.map((r) => moment(r.date).format("YYYY-MM-DD")),
     );
 
-    let streak = 0;
     let cursor = moment().startOf("day");
+    if (!doneDays.has(cursor.format("YYYY-MM-DD"))) {
+      cursor = cursor.subtract(1, "day");
+    }
+
+    let streak = 0;
     while (doneDays.has(cursor.format("YYYY-MM-DD"))) {
       streak++;
       cursor = cursor.subtract(1, "day");

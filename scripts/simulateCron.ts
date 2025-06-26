@@ -1,4 +1,4 @@
-import { resetRecurringStatuses } from "@/utils/resetRecurringStatus";
+import { resetRecurringStatuses } from "../src/utils/resetRecurringStatus";
 
 resetRecurringStatuses()
   .then(() => {

@@ -11,7 +11,11 @@ import TopHeader from "@/components/TopHeader";
 import FadeLoader from "react-spinners/FadeLoader";
 import ReviewHeader from "@/components/review-header";
 import type { SubjectWithCards } from "@/types";
-import { getEarliestNextReviewDate, isSubjectOverdue } from "@/utils/utils";
+import {
+  getEarliestNextReviewDate,
+  getNearestNextReviewDate,
+  isSubjectOverdue,
+} from "@/utils/utils";
 
 export default function ReviewPage() {
   const [subjectStats, setSubjectStats] = useState<SubjectWithCards[]>([]);
@@ -39,6 +43,10 @@ export default function ReviewPage() {
   );
   const subjectsWithoutDueCards = subjectWithCards?.filter(
     (subject) => !isSubjectOverdue(subject),
+  );
+
+  const nearestNextReviewDate = getNearestNextReviewDate(
+    subjectWithCards ?? [],
   );
 
   if (dueCards === 0 && !isLoading) {
@@ -70,7 +78,7 @@ export default function ReviewPage() {
                     <div className="font-semibold text-blue-900">
                       Next Review
                     </div>
-                    <div className="text-blue-700">Tomorrow</div>
+                    <div className="text-blue-700">{nearestNextReviewDate}</div>
                   </div>
                   <div className="rounded-lg bg-green-50 p-4">
                     <div className="font-semibold text-green-900">Streak</div>

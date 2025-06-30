@@ -75,8 +75,6 @@ export default function DashboardPage() {
 
   const completedSessionsPercentage =
     sessionStats?.completedSessionsPercentage ?? 0;
-  const completedWeeklyPercentage =
-    sessionStats?.completedWeekSessionsPercentage ?? 0;
   const dueTodayCards = cardStats?.dueToday ?? 0;
   const totalCards = cardStats?.totalFlashcards ?? 0;
 
@@ -308,10 +306,10 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div className="mb-2 flex justify-between text-sm">
-                  <span>Weekly Progress</span>
-                  <span>{completedWeeklyPercentage}%</span>
+                  <span>Tasks completed</span>
+                  <span>{completionRate}%</span>
                 </div>
-                <Progress value={completedWeeklyPercentage} className="h-2" />
+                <Progress value={completionRate} className="h-2" />
               </div>
 
               <div>
@@ -404,15 +402,6 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <>
-                  {/* Progress indicator */}
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>
-                      {completedTodos} of {totalTodos} tasks completed
-                    </span>
-                    <span>{Math.round(completionRate)}%</span>
-                  </div>
-                  <Progress value={completionRate} className="h-2" />
-
                   {todos.length === 0 ? (
                     <div className="py-8 text-center text-gray-500">
                       <CheckCircle2 className="mx-auto mb-3 h-12 w-12 opacity-50" />

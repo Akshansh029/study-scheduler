@@ -157,6 +157,7 @@ const ActiveSessionPage = () => {
       localStorage.removeItem("sessionTimer");
       localStorage.removeItem("actualStartTime");
       localStorage.removeItem("isTimerRunning");
+      void refetch();
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong ending your session");

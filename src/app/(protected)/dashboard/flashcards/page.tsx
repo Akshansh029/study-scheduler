@@ -292,7 +292,7 @@ export default function FlashcardsPage() {
                   value={selectedSubject ?? ""}
                   onValueChange={(value) => setSelectedSubject(value || null)}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[230px]">
                     <div className="flex items-center gap-2">
                       <Filter className="h-4 w-4" />
                       <SelectValue placeholder="All Subjects" />

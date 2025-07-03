@@ -307,7 +307,7 @@ export default function DashboardPage() {
               <div>
                 <div className="mb-2 flex justify-between text-sm">
                   <span>Tasks completed</span>
-                  <span>{completionRate}%</span>
+                  <span>{Math.floor(completionRate)}%</span>
                 </div>
                 <Progress value={completionRate} className="h-2" />
               </div>

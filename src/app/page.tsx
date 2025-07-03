@@ -129,34 +129,6 @@ export default function LandingPage() {
               <SignUpButton />
             </Button>
           </div>
-
-          {/* Social Proof */}
-          <div className="grid grid-cols-2 gap-8 text-center md:grid-cols-4">
-            <div>
-              <div className="mb-1 text-3xl font-bold text-indigo-600">
-                50k+
-              </div>
-              <div className="text-sm text-gray-600">Active Students</div>
-            </div>
-            <div>
-              <div className="mb-1 text-3xl font-bold text-purple-600">
-                2.3M+
-              </div>
-              <div className="text-sm text-gray-600">Cards Studied</div>
-            </div>
-            <div>
-              <div className="mb-1 text-3xl font-bold text-emerald-600">
-                94%
-              </div>
-              <div className="text-sm text-gray-600">Pass Rate</div>
-            </div>
-            <div>
-              <div className="mb-1 text-3xl font-bold text-orange-600">
-                4.9/5
-              </div>
-              <div className="text-sm text-gray-600">Student Rating</div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -304,10 +276,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-gray-900 px-4 py-8 text-white">
         <div className="text-center text-gray-400">
-          <p>
-            &copy; 2024 SlotWise. All rights reserved. Built with science and
-            care.
-          </p>
+          <p>&copy; 2025 SlotWise. Built with science and care.</p>
         </div>
       </footer>
     </div>

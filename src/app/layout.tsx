@@ -9,7 +9,7 @@ import { TRPCReactProvider } from "@/trpc/react";
 export const metadata: Metadata = {
   title: "SlotWise",
   description: "Smart Study Scheduler",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: "icon", url: "/icons8-brain-16.png" }],
 };
 
 const geist = Geist({

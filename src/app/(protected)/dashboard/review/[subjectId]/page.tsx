@@ -25,6 +25,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api } from "@/trpc/react";
 import TopHeader from "@/components/TopHeader";
+import useRefetch from "hooks/use-refetch";
 
 interface ReviewLog {
   id?: string;
@@ -71,6 +72,8 @@ export default function SubjectReviewPage() {
   const dueCards = flashcards.filter((card) =>
     moment(card.nextReviewDate).isSameOrBefore(moment(), "day"),
   );
+
+  const refetch = useRefetch();
 
   // Initialize review session when flashcards are loaded
   useEffect(() => {
@@ -226,7 +229,7 @@ export default function SubjectReviewPage() {
               <p className="mb-6 text-gray-600">
                 This subject has no flashcards due for review right now.
               </p>
-              <Button asChild>
+              <Button asChild onClick={() => void refetch()}>
                 <Link href="/dashboard/review">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to All Reviews

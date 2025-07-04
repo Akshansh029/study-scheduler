@@ -45,7 +45,7 @@ Study Scheduler is a modern study scheduling and review application that helps s
   ![Ongoing session](<Screenshot 2025-07-04 130228.png>)
 
 - Review page
-  ![Review page](<Screenshot 2025-07-04 130306-1.png>)
+  ![Review page](<Screenshot 2025-07-04 130306.png>)
 
 - Profile page
   ![Profile page](image.png)

@@ -74,8 +74,8 @@ const settingsItems = [
 
 export function AppSidebar() {
   const [selected, setSelected] = useState(() => {
-    const selectedItem = localStorage.getItem("sidebarItem");
-    return selectedItem ?? "Dashboard";
+    if (typeof window === "undefined") return "Dashboard";
+    return localStorage.getItem("sidebarItem") ?? "Dashboard";
   });
 
   const { data: userData, isLoading } = api.user.getUserDetails.useQuery();

@@ -63,45 +63,55 @@ const ActiveSessionPage = () => {
       sessionId: sessionId,
       updatedStatus: "in-progress",
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
   const actualStartTimeRef = useRef<Date | null>(null);
 
   useEffect(() => {
-    localStorage.removeItem("isTimerRunning");
-    setIsTimerRunning(true);
-  }, []);
-
-  useEffect(() => {
-    const storedStart = localStorage.getItem("actualStartTime");
-    if (storedStart) {
-      const parsed = new Date(storedStart);
-      actualStartTimeRef.current = parsed;
-      setActualStartTimeDisplay(moment(parsed).format("h:mm:ss A"));
-    } else {
-      const now = new Date();
-      actualStartTimeRef.current = now;
-      localStorage.setItem("actualStartTime", now.toISOString());
-      setActualStartTimeDisplay(moment(now).format("h:mm:ss A"));
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("isTimerRunning");
+      setIsTimerRunning(true);
     }
   }, []);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isTimerRunning) {
-      interval = setInterval(() => {
-        setSessionTimer((prev) => {
-          const updated = prev + 1;
-          localStorage.setItem("sessionTimer", updated.toString());
-          return updated;
-        });
-      }, 1000);
+    if (typeof window !== "undefined") {
+      // Safe to use localStorage here
+      const storedStart = localStorage.getItem("actualStartTime");
+      if (storedStart) {
+        const parsed = new Date(storedStart);
+        actualStartTimeRef.current = parsed;
+        setActualStartTimeDisplay(moment(parsed).format("h:mm:ss A"));
+      } else {
+        const now = new Date();
+        actualStartTimeRef.current = now;
+        localStorage.setItem("actualStartTime", now.toISOString());
+        setActualStartTimeDisplay(moment(now).format("h:mm:ss A"));
+      }
     }
-    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      let interval: NodeJS.Timeout;
+      if (isTimerRunning) {
+        interval = setInterval(() => {
+          setSessionTimer((prev) => {
+            const updated = prev + 1;
+            localStorage.setItem("sessionTimer", updated.toString());
+            return updated;
+          });
+        }, 1000);
+      }
+      return () => clearInterval(interval);
+    }
   }, [isTimerRunning]);
 
   useEffect(() => {
-    localStorage.setItem("isTimerRunning", JSON.stringify(isTimerRunning));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("isTimerRunning", JSON.stringify(isTimerRunning));
+    }
   }, [isTimerRunning]);
 
   const startTime = session?.startTime;

@@ -546,13 +546,6 @@ export default function FlashcardsPage() {
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
-                                  <Button
-                                    size="sm"
-                                    className="bg-indigo-600 hover:bg-indigo-700"
-                                  >
-                                    <Play className="mr-2 h-4 w-4" />
-                                    Practice
-                                  </Button>
                                 </div>
                               </div>
                             </CardContent>

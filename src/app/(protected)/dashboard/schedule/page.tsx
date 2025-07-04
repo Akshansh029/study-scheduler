@@ -93,6 +93,7 @@ export default function SchedulePage() {
       id: s.id,
       title: s.title,
       nextSessionDate: s.nextSessionDate,
+      nextSessionEndDate: s.nextSessionEndDate,
       startTime: new Date(s.startTime),
       endTime: new Date(s.endTime),
       subjectId: s.subjectId!,

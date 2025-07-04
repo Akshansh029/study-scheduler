@@ -1,6 +1,6 @@
 // app/sync-user/page.tsx
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { db } from "@/server/db";
+import { db } from "../../server/db";
 import { notFound } from "next/navigation";
 import ClientRedirect from "./client-redirect";
 

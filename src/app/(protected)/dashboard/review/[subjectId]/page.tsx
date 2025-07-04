@@ -22,10 +22,9 @@ import {
 import { toast } from "sonner";
 import moment from "moment";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { api } from "@/trpc/react";
 import TopHeader from "@/components/TopHeader";
-import ReviewHeader from "@/components/review-header";
 
 interface ReviewLog {
   id?: string;
@@ -54,7 +53,6 @@ export default function SubjectReviewPage() {
   const [reviewSession, setReviewSession] = useState<ReviewSession | null>(
     null,
   );
-  const [cardStartTime, setCardStartTime] = useState<Date>(new Date());
   const [sessionComplete, setSessionComplete] = useState(false);
 
   const { data: userData } = api.subject.getUser.useQuery();
@@ -87,17 +85,11 @@ export default function SubjectReviewPage() {
     }
   }, [flashcardsData, reviewSession, dueCards.length]);
 
-  // Handle errors
   useEffect(() => {
     if (error) {
       toast.error("Failed to load flashcards");
     }
   }, [error]);
-
-  // Reset card start time when moving to next card
-  useEffect(() => {
-    setCardStartTime(new Date());
-  }, [currentCardIndex]);
 
   // FIXED: Use dueCards instead of all flashcards for calculations
   const progress =

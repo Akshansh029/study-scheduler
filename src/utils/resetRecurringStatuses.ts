@@ -1,4 +1,4 @@
-import { db } from "@/server/db";
+import { db } from "../server/db";
 import moment from "moment";
 
 export const resetRecurringStatuses = async () => {

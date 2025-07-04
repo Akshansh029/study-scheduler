@@ -34,7 +34,6 @@ import {
   Search,
   Edit,
   Trash2,
-  Play,
   CheckCircle,
   Clock,
   AlertCircle,
@@ -441,14 +440,7 @@ export default function FlashcardsPage() {
                                                 setIsDeleteDialogOpen(true);
                                               }}
                                             >
-                                              <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                              size="sm"
-                                              className="bg-indigo-600 hover:bg-indigo-700"
-                                            >
-                                              <Play className="mr-2 h-4 w-4" />
-                                              Practice
+                                              <Trash2 className="h-4 w-4 text-red-500" />
                                             </Button>
                                           </div>
                                         </div>

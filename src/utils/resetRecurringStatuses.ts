@@ -1,7 +1,7 @@
-import { db } from "../server/db";
+import { db } from "@/server/db";
 import moment from "moment";
 
-export const resetRecurringStatuses = async () => {
+export default async function resetRecurringStatuses() {
   const todayStart = moment().startOf("day");
 
   try {
@@ -46,4 +46,4 @@ export const resetRecurringStatuses = async () => {
     console.error("❌ Error in resetRecurringStatuses:", error);
     throw error;
   }
-};
+}

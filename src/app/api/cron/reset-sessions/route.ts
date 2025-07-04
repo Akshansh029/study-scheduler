@@ -1,4 +1,4 @@
-import { resetRecurringStatuses } from "../../../../utils/resetRecurringStatuses";
+import resetRecurringStatuses from "@/utils/resetRecurringStatuses";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 

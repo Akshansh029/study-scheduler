@@ -2,7 +2,7 @@
 
 SlotWise is a modern study scheduling and review application that helps students plan, track, and review their study sessions with spaced-repetition flashcards, smart scheduling and progress analytics. Built with the modern T3-Stack (Next.js App Router + tRPC + Prisma), it delivers an end-to-end type-safe developer experience and a smooth, responsive UI.
 
-![Landing page](<Screenshot 2025-07-04 130528.png>)
+![Landing page](public/Landing_page.png)
 
 ## Tech Stack
 
@@ -30,22 +30,22 @@ SlotWise is a modern study scheduling and review application that helps students
 ## Screenshots
 
 - Dashboard
-  ![Dashboard](<Screenshot 2025-07-04 130131.png>)
+  ![Dashboard](<public/Dashboard.png)
 
 - Schedule page
-  ![Schedule page](<Screenshot 2025-07-04 130329.png>)
+  ![Schedule page](public/Schedule_page.png)
 
 - Subjects page
-  ![Subjects page](<Screenshot 2025-07-04 130316.png>)
+  ![Subjects page](public/Subject_page.png)
 
 - Sessions page
-  ![Sessions page](<Screenshot 2025-07-04 130125.png>)
+  ![Sessions page](public/Sessions_page.png)
 
 - Ongoing session
-  ![Ongoing session](<Screenshot 2025-07-04 130228.png>)
+  ![Ongoing session](public/Ongoing_session.png)
 
 - Review page
-  ![Review page](<Screenshot 2025-07-04 130306.png>)
+  ![Review page](public/Review_page.png)
 
 - Profile page
   ![Profile page](image.png)

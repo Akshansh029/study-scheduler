@@ -2,7 +2,8 @@
   "crons": [
     {
       "path": "/api/cron/reset-sessions",
-      "schedule": "1 0 * * *"
+      "schedule": "1 0 * * *",
+      "method": "POST"
     }
   ]
 }

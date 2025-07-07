@@ -273,7 +273,7 @@ export default function DashboardPage() {
                                   ).format("hh:mm A")}
                                 </p>
                                 {isSubjectOverdue(subject) ? (
-                                  <Badge variant="destructive">Overdue</Badge>
+                                  <Badge variant="destructive">Due today</Badge>
                                 ) : (
                                   <></>
                                 )}

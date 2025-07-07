@@ -166,7 +166,7 @@ export default function ReviewPage() {
                                       variant="destructive"
                                       className="text-sm"
                                     >
-                                      Overdue
+                                      Due today
                                     </Badge>
                                   )}
                                 </div>

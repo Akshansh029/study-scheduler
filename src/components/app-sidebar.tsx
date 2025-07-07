@@ -24,10 +24,11 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { api } from "@/trpc/react";
+import { usePathname } from "next/navigation";
 
 // Menu items for main navigation
 const mainItems = [
@@ -73,10 +74,19 @@ const settingsItems = [
 ];
 
 export function AppSidebar() {
-  const [selected, setSelected] = useState(() => {
-    if (typeof window === "undefined") return "Dashboard";
-    return localStorage.getItem("sidebarItem") ?? "Dashboard";
-  });
+  const pathname = usePathname(); // e.g. "/dashboard/schedule"
+  const allItems = [...mainItems, ...settingsItems];
+
+  // derive title from the current path, default to "Dashboard"
+  const matched = allItems.find((i) => i.url === pathname);
+  const defaultTitle = matched ? matched.title : "Dashboard";
+
+  const [selected, setSelected] = useState(defaultTitle);
+
+  useEffect(() => {
+    setSelected(defaultTitle);
+    localStorage.setItem("sidebarItem", defaultTitle);
+  }, [defaultTitle]);
 
   const { data: userData, isLoading } = api.user.getUserDetails.useQuery();
 

@@ -12,4 +12,5 @@ jobs:
     steps:
       - name: Trigger reset endpoint
         run: |
-          curl -X GET "https://slotwise-self.vercel.app/api/cron/reset-sessions?secret=${{ secrets.CRON_SECRET }}"
+          curl -v \
+            "https://slotwise-self.vercel.app/api/cron/reset-sessions?secret=${{ secrets.CRON_SECRET }}"

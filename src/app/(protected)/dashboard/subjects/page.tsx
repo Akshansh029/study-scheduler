@@ -89,6 +89,7 @@ export default function SubjectsPage() {
   const deleteSubject = api.subject.deleteSubject.useMutation({
     onSuccess: () => {
       toast.success("Subject deleted");
+      setIsDeleteDialogOpen(false);
       void refetch();
     },
     onError: () => {
@@ -111,7 +112,6 @@ export default function SubjectsPage() {
     deleteSubject.mutate({
       id: id,
     });
-    setIsDeleteDialogOpen(false);
     setSelectedCardId("");
   };
 
@@ -360,7 +360,7 @@ export default function SubjectsPage() {
                 handleDeleteSubject(selectedCardId!);
               }}
             >
-              Delete
+              {deleteSubject.status === "pending" ? "Deleting" : "Delete"}
             </Button>
             <Button
               variant="outline"

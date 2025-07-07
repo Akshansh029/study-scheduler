@@ -647,11 +647,12 @@ export default function FlashcardsPage() {
             <Button
               variant="destructive"
               className="cursor-pointer"
+              disabled={deleteCardMutation.status === "pending"}
               onClick={() => {
                 deleteCard(selectedCardId!);
               }}
             >
-              Delete
+              {deleteCardMutation.status === "pending" ? "Deleting" : "Delete"}
             </Button>
             <Button
               variant="outline"

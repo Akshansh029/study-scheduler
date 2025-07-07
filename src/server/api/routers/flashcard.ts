@@ -146,6 +146,13 @@ export const flashcardRouter = createTRPCRouter({
         throw new Error("User not authenticated");
       }
 
+      await ctx.db.reviewLog.deleteMany({
+        where: {
+          userId: userId,
+          flashcardId: input,
+        },
+      });
+
       // Verify the flashcard belongs to the user
       const flashcard = await ctx.db.flashcard.findFirst({
         where: {

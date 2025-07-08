@@ -12,21 +12,18 @@ import { toast } from "sonner";
 import { Trophy, Home, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import useRefetch from "hooks/use-refetch";
+import { useSessionTimer } from "hooks/useSessionTimer";
 
 const ActiveSessionPage = () => {
   const params = useParams();
   const sessionId = params.sessionId as string;
-  const [sessionTimer, setSessionTimer] = useState<number>(() => {
-    const storedTime = localStorage.getItem("sessionTimer");
-    return storedTime ? parseInt(storedTime) : 0;
-  });
-  const [isTimerRunning, setIsTimerRunning] = useState(() => {
-    const storedRunning = localStorage.getItem("isTimerRunning");
-    return storedRunning ? JSON.parse(storedRunning) : true;
-  });
   const [sessionComplete, setSessionComplete] = useState(false);
   const [timeStudied, setTimeStudied] = useState(0);
   const [actualStartTimeDisplay, setActualStartTimeDisplay] = useState("");
+  const [endTimeDisplay, setEndTimeDisplay] = useState<string | null>(null);
+
+  const { hours, minutes, seconds, isRunning, start, pause, reset } =
+    useSessionTimer();
 
   const { data: session, isLoading } = api.session.getSession.useQuery({
     sessionId,
@@ -70,13 +67,6 @@ const ActiveSessionPage = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("isTimerRunning");
-      setIsTimerRunning(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
       // Safe to use localStorage here
       const storedStart = localStorage.getItem("actualStartTime");
       if (storedStart) {
@@ -92,45 +82,25 @@ const ActiveSessionPage = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      let interval: NodeJS.Timeout;
-      if (isTimerRunning) {
-        interval = setInterval(() => {
-          setSessionTimer((prev) => {
-            const updated = prev + 1;
-            localStorage.setItem("sessionTimer", updated.toString());
-            return updated;
-          });
-        }, 1000);
-      }
-      return () => clearInterval(interval);
-    }
-  }, [isTimerRunning]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("isTimerRunning", JSON.stringify(isTimerRunning));
-    }
-  }, [isTimerRunning]);
-
   const startTime = session?.startTime;
   const endTime = session?.endTime;
   const ms = moment(endTime).diff(moment(startTime));
   const durationInSeconds = Math.round(ms / 1000);
 
-  const formatTime = (seconds: number) => {
+  const formatDurationTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
-    return `${minutes}:${secs.toString().padStart(2, "0")}`;
+    return `00:${minutes}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const pauseSession = () => setIsTimerRunning(false);
-  const resumeSession = () => setIsTimerRunning(true);
+  const formatTime = () =>
+    [hours, minutes, seconds]
+      .map((n) => n.toString().padStart(2, "0"))
+      .join(":");
 
   const endSession = async () => {
     if (!session) return;
@@ -151,6 +121,7 @@ const ActiveSessionPage = () => {
       }
 
       const endTime = new Date();
+      setEndTimeDisplay(moment(endTime).format("h:mm:ss A"));
       const startTime = actualStartTimeRef.current;
 
       await updateDailyStudyMutation.mutateAsync({
@@ -161,8 +132,8 @@ const ActiveSessionPage = () => {
         const diff = moment(endTime).diff(moment(startTime), "seconds");
         setTimeStudied(diff);
       }
-      setIsTimerRunning(false);
-      setSessionTimer(0);
+      pause();
+      reset();
       setSessionComplete(true);
       localStorage.removeItem("sessionTimer");
       localStorage.removeItem("actualStartTime");
@@ -194,14 +165,14 @@ const ActiveSessionPage = () => {
               <div className="text-right">
                 <div className="text-sm text-gray-600">Session Timer</div>
                 <div className="font-mono text-xl font-bold">
-                  {formatTime(sessionTimer)}
+                  {formatTime()}
                 </div>
               </div>
               <div className="flex gap-2">
-                {isTimerRunning ? (
+                {isRunning ? (
                   <Button
                     variant="outline"
-                    onClick={pauseSession}
+                    onClick={pause}
                     className="cursor-pointer"
                   >
                     <Pause className="mr-2 h-4 w-4" /> Pause
@@ -209,7 +180,7 @@ const ActiveSessionPage = () => {
                 ) : (
                   <Button
                     variant="outline"
-                    onClick={resumeSession}
+                    onClick={start}
                     className="cursor-pointer"
                   >
                     <Play className="mr-2 h-4 w-4" /> Resume
@@ -321,14 +292,14 @@ const ActiveSessionPage = () => {
                       Started: {actualStartTimeDisplay || "Not available"}
                     </div>
                     <div className="text-sm text-gray-600">
-                      Ended: {moment().format("h:mm:ss A")}
+                      Ended: {endTimeDisplay ?? "Not available"}
                     </div>
                   </div>
                   <div className="rounded-lg bg-gray-50 p-4 text-center">
                     <Clock className="mx-auto mb-2 h-8 w-8 text-blue-500" />
                     <div className="text-lg font-semibold">Study Duration</div>
                     <div className="text-sm text-gray-600">
-                      Planned: {formatTime(durationInSeconds)} hrs
+                      Planned: {formatDurationTime(durationInSeconds)} hrs
                     </div>
                     <div className="text-sm text-gray-600">
                       Actual:{" "}
@@ -382,7 +353,7 @@ const ActiveSessionPage = () => {
                         <Clock className="h-8 w-8 text-blue-600" />
                       </div>
                       <div className="text-2xl font-bold text-gray-800">
-                        {formatTime(sessionTimer)}
+                        {formatTime()}
                       </div>
                       <div className="text-sm text-gray-600">Time Invested</div>
                     </div>
@@ -402,7 +373,7 @@ const ActiveSessionPage = () => {
                         <Brain className="h-8 w-8 text-purple-600" />
                       </div>
                       <div className="text-2xl font-bold text-gray-800">
-                        {formatTime(durationInSeconds)} hrs
+                        {formatDurationTime(durationInSeconds)} hrs
                       </div>
                       <div className="text-sm text-gray-600">
                         Total Duration

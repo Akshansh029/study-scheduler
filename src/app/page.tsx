@@ -17,6 +17,7 @@ import {
   Lightbulb,
   BarChart3,
   GraduationCap,
+  Github,
 } from "lucide-react";
 import { SignInButton, SignUpButton } from "@clerk/nextjs";
 
@@ -31,7 +32,6 @@ export default function LandingPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
                 <Brain className="h-6 w-6 text-white" />
               </div>
-              <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-400"></div>
             </div>
             <div>
               <span className="text-xl font-bold text-gray-900">SlotWise</span>
@@ -66,7 +66,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-indigo-50/50 to-white px-4 py-20">
+      <section className="bg-gradient-to-b from-indigo-50/50 to-white px-4 py-12">
         <div className="container mx-auto max-w-5xl text-center">
           <Badge
             variant="secondary"
@@ -128,6 +128,14 @@ export default function LandingPage() {
             >
               <SignUpButton />
             </Button>
+            <Link
+              href="https://github.com/Akshansh029/study-scheduler"
+              target="_blank"
+              className="flex items-center justify-center gap-2 rounded-lg border border-gray-800 bg-black px-4 py-2 text-base font-medium text-gray-100 transition-colors hover:bg-gray-800"
+            >
+              Star us on GitHub
+              <Github size={20} />
+            </Link>
           </div>
         </div>
       </section>
@@ -259,16 +267,6 @@ export default function LandingPage() {
                 </div>
               </CardHeader>
             </Card>
-          </div>
-
-          {/* Research Citations */}
-          <div className="mt-16 text-center">
-            <p className="mx-auto max-w-3xl text-sm text-gray-500">
-              Based on research from cognitive scientists including Hermann
-              Ebbinghaus, Henry Roediger, and Jeffrey Karpicke. Studies
-              published in journals like Psychological Science and Journal of
-              Experimental Psychology.
-            </p>
           </div>
         </div>
       </section>

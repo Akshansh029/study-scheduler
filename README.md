@@ -129,6 +129,10 @@ SlotWise is a modern study scheduling and review application that helps students
     └── utils
 ```
 
+## Database schema
+
+![Database schema](public/DB_schema.png)
+
 ## Environment Variables
 
 ```

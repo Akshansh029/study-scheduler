@@ -1,0 +1,118 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  emailAddress String [unique, not null]
+  message String [not null, default: 'You can do it!']
+  firstName String
+  lastName String
+  imageUrl String
+  subjects Subject [not null]
+  sessions StudySession [not null]
+  flashcards Flashcard [not null]
+  reviewLogs ReviewLog [not null]
+  Todo Todo [not null]
+  DailyStudy DailyStudy [not null]
+}
+
+Table Subject {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  title String [not null]
+  color String [not null, default: '#4F46E5']
+  user User [not null]
+  userId String [not null]
+  flashcards Flashcard [not null]
+  sessions StudySession [not null]
+}
+
+Table StudySession {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  title String [not null]
+  description String
+  startTime DateTime [not null]
+  endTime DateTime [not null]
+  recurrence String [default: 'none']
+  nextSessionDate DateTime [not null]
+  nextSessionEndDate DateTime [not null]
+  status String [not null, default: 'upcoming']
+  user User [not null]
+  userId String [not null]
+  subject Subject
+  subjectId String
+}
+
+Table Flashcard {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  question String [not null]
+  answer String [not null]
+  repetitionCount Int [not null, default: 0]
+  easeFactor Float [not null, default: 2.5]
+  interval Int [not null, default: 1]
+  nextReviewDate DateTime [default: `now()`, not null]
+  subject Subject [not null]
+  subjectId String [not null]
+  user User [not null]
+  userId String [not null]
+  reviewLogs ReviewLog [not null]
+}
+
+Table ReviewLog {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  reviewDate DateTime [default: `now()`, not null]
+  quality Int [not null]
+  flashcard Flashcard [not null]
+  flashcardId String [not null]
+  user User [not null]
+  userId String [not null]
+}
+
+Table Todo {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  text String [not null]
+  completed Boolean [not null, default: false]
+  userId String [not null]
+  user User [not null]
+}
+
+Table DailyStudy {
+  id String [pk]
+  userId String [not null]
+  user User [not null]
+  date DateTime [not null]
+  totalMs Int [not null, default: 0]
+  sessions Int [not null, default: 0]
+
+  indexes {
+    (userId, date) [unique]
+  }
+}
+
+Ref: Subject.userId > User.id
+
+Ref: StudySession.userId > User.id
+
+Ref: StudySession.subjectId > Subject.id
+
+Ref: Flashcard.subjectId > Subject.id
+
+Ref: Flashcard.userId > User.id
+
+Ref: ReviewLog.flashcardId > Flashcard.id
+
+Ref: ReviewLog.userId > User.id
+
+Ref: Todo.userId > User.id
+
+Ref: DailyStudy.userId > User.id

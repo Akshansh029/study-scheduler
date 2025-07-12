@@ -112,12 +112,20 @@ export const sessionRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const session = await ctx.db.studySession.findUnique({
+        where: { id: input.id },
+      });
+
+      if (!session) throw new Error("Session not found");
+
       return await ctx.db.studySession.update({
         where: { id: input.id },
         data: {
           title: input.title,
           startTime: input.startTime,
           endTime: input.endTime,
+          nextSessionDate: input.startTime,
+          nextSessionEndDate: input.endTime,
           recurrence: input.recurrence,
           description: input.description,
           subjectId: input.subjectId,

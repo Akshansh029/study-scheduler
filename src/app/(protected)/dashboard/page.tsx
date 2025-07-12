@@ -225,9 +225,7 @@ export default function DashboardPage() {
                               </div>
                               <div className="text-right">
                                 <p className="text-sm font-medium">
-                                  {moment(session.nextSessionDate).format(
-                                    "hh:mm A",
-                                  )}
+                                  {moment(session.startTime).format("hh:mm A")}
                                 </p>
                                 {getStatusBadge(calculateStatus(session))}
                               </div>

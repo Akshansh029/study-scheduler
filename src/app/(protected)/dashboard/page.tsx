@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
+import { MoonLoader } from "react-spinners";
 import {
   Calendar,
   TrendingUp,
@@ -35,6 +36,7 @@ export default function DashboardPage() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState("");
   const [allSessions, setAllSessions] = useState<StudySession[]>();
+  const [selectedTodoId, setSelectedTodoId] = useState<string | null>(null);
 
   const refetch = useRefetch();
 
@@ -66,9 +68,11 @@ export default function DashboardPage() {
   });
   const deleteTodoMutation = api.todo.deleteTodo.useMutation({
     onSuccess: () => {
+      setSelectedTodoId(null);
       void refetch();
     },
     onError: () => {
+      setSelectedTodoId(null);
       toast.error("Failed to delete todo");
     },
   });
@@ -143,6 +147,7 @@ export default function DashboardPage() {
   };
 
   const deleteTodo = (id: string) => {
+    setSelectedTodoId(id);
     deleteTodoMutation.mutate({
       todoId: id,
     });
@@ -388,7 +393,11 @@ export default function DashboardPage() {
                   disabled={createTodoMutation.status === "pending"}
                   className="cursor-pointer"
                 >
-                  <Plus className="h-2 w-2" />
+                  {createTodoMutation.status === "pending" ? (
+                    <MoonLoader className="h-4 w-4" size={14} color="white" />
+                  ) : (
+                    <Plus className="h-2 w-2" />
+                  )}
                 </Button>
               </div>
 
@@ -432,9 +441,19 @@ export default function DashboardPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => deleteTodo(todo.id)}
+                            disabled={deleteTodoMutation.status === "pending"}
                             className="text-red-500 hover:text-red-700"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            {selectedTodoId === todo.id &&
+                            deleteTodoMutation.status === "pending" ? (
+                              <MoonLoader
+                                className="h-2 w-2"
+                                size={12}
+                                color="#dc2626"
+                              />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
                           </Button>
                         </div>
                       ))}

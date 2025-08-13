@@ -284,7 +284,8 @@ export const sessionRouter = createTRPCRouter({
     const completedSessions = sessions.filter(
       (s) =>
         s.status === "completed" &&
-        moment(s.nextSessionDate).isAfter(today, "day"),
+        (moment(s.nextSessionDate).isAfter(today, "day") ||
+          moment(s.startTime).isSame(today, "day")),
     ).length;
 
     const completedSessionsPercentage = Math.floor(

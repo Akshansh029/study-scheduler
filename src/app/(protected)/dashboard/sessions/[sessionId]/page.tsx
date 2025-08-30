@@ -115,6 +115,7 @@ const ActiveSessionPage = () => {
         updateSessionDateMutation.mutate({
           sessionId: session.id,
           recurrence: session?.recurrence,
+          recurrenceDays: session?.recurrenceDays,
           nextSessionDate: session.nextSessionDate,
           nextSessionEndDate: session.nextSessionEndDate,
         });

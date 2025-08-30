@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import moment from "moment";
 import { RRule } from "rrule";
+import { TRPCError } from "@trpc/server";
 
 export const sessionRouter = createTRPCRouter({
   createSession: protectedProcedure
@@ -51,6 +52,7 @@ export const sessionRouter = createTRPCRouter({
           startTime: true,
           endTime: true,
           recurrence: true,
+          recurrenceDays: true,
           status: true,
           nextSessionDate: true,
           nextSessionEndDate: true,
@@ -143,33 +145,90 @@ export const sessionRouter = createTRPCRouter({
       z.object({
         sessionId: z.string(),
         recurrence: z.string(),
+        recurrenceDays: z.array(z.number()).optional(),
         nextSessionDate: z.date(),
         nextSessionEndDate: z.date(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Normalize recurrence token
+      const recurrence = String(input.recurrence ?? "").toLowerCase();
+
       let mNext = moment(input.nextSessionDate);
       let endNext = moment(input.nextSessionEndDate);
 
-      if (input.recurrence === "daily") {
+      if (recurrence === "daily") {
         mNext = mNext.clone().add(1, "day");
         endNext = endNext.clone().add(1, "day");
-      } else if (input.recurrence === "weekly") {
+      } else if (recurrence === "weekly") {
         mNext = mNext.clone().add(1, "week");
         endNext = endNext.clone().add(1, "week");
-      } else if (input.recurrence === "monthly") {
+      } else if (recurrence === "monthly") {
         mNext = mNext.clone().add(1, "month");
         endNext = endNext.clone().add(1, "month");
+      } else if (recurrence === "custom") {
+        // recurrenceDays must be provided for custom
+        const days = input.recurrenceDays;
+        if (!Array.isArray(days) || days.length === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "recurrenceDays is required for custom recurrence.",
+          });
+        }
+
+        // sanitize & sort unique weekday numbers 0..6 (0=Sun)
+        const sortedDays: number[] = Array.from(
+          new Set(
+            days
+              .map((d) => Number(d))
+              .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6),
+          ),
+        ).sort((a, b) => a - b);
+
+        if (sortedDays.length === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "recurrenceDays must contain at least one valid weekday (0..6).",
+          });
+        }
+
+        const currentDay = mNext.day(); // 0..6 (Sun..Sat)
+
+        // Find next weekday strictly after currentDay, else wrap to first in list next week
+        const nextDayGreater = sortedDays.find((d) => d > currentDay);
+        let deltaDays: number;
+        if (typeof nextDayGreater === "number") {
+          deltaDays = nextDayGreater - currentDay;
+        } else {
+          // wrap to next week
+          if (typeof sortedDays[0] === "undefined") {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "No valid recurrenceDays found for custom recurrence.",
+            });
+          }
+          deltaDays = 7 - currentDay + sortedDays[0];
+        }
+
+        mNext = mNext.clone().add(deltaDays, "days");
+        endNext = endNext.clone().add(deltaDays, "days");
+      } else {
+        console.warn(
+          "updateSessionDate: unknown recurrence token, not updating nextSession date:",
+          input.recurrence,
+        );
       }
 
-      return await ctx.db.studySession.update({
+      const updated = await ctx.db.studySession.update({
         where: { id: input.sessionId },
         data: {
           nextSessionDate: mNext.toDate(),
           nextSessionEndDate: endNext.toDate(),
-          // status: "upcoming",
         },
       });
+
+      return updated;
     }),
 
   deleteSession: protectedProcedure

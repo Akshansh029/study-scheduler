@@ -44,6 +44,7 @@ export default function SchedulePage() {
     startTime: "",
     endTime: "",
     recurrence: "none",
+    recurrenceDays: [] as number[],
     description: "",
   });
 
@@ -86,6 +87,33 @@ export default function SchedulePage() {
     return () => clearTimeout(t);
   }, []);
 
+  // Custom recurrence helpers
+  const WEEKDAYS = [
+    { short: "S", label: "Sun", idx: 0 },
+    { short: "M", label: "Mon", idx: 1 },
+    { short: "T", label: "Tue", idx: 2 },
+    { short: "W", label: "Wed", idx: 3 },
+    { short: "T", label: "Thu", idx: 4 },
+    { short: "F", label: "Fri", idx: 5 },
+    { short: "S", label: "Sat", idx: 6 },
+  ];
+
+  function toggleDay(idx: number) {
+    setForm((f) => {
+      const has = f.recurrenceDays.includes(idx);
+      return {
+        ...f,
+        recurrenceDays: has
+          ? f.recurrenceDays.filter((d) => d !== idx)
+          : [...f.recurrenceDays, idx],
+      };
+    });
+  }
+
+  function daySelected(idx: number) {
+    return form.recurrenceDays.includes(idx);
+  }
+
   // Safely default to empty array:
   const sessions: StudySession[] = (rawSessions ?? [])
     .filter((s) => typeof s.subjectId === "string" && s.subjectId && s.subject)
@@ -99,6 +127,7 @@ export default function SchedulePage() {
       subjectId: s.subjectId!,
       subject: s.subject as { id: string; title: string; color: string },
       recurrence: s.recurrence,
+      recurrenceDays: s.recurrenceDays ?? [],
       description: s.description,
       status: "upcoming",
     }));
@@ -127,6 +156,7 @@ export default function SchedulePage() {
       startTime: "",
       endTime: "",
       recurrence: "none",
+      recurrenceDays: [],
       description: "",
     });
     setIsDialogOpen(true);
@@ -140,6 +170,7 @@ export default function SchedulePage() {
       startTime: moment(sess.startTime).local().format("YYYY-MM-DDTHH:mm"),
       endTime: moment(sess.endTime).local().format("YYYY-MM-DDTHH:mm"),
       recurrence: (sess.recurrence as RecType) ?? "none",
+      recurrenceDays: sess.recurrenceDays ?? [],
       description: sess.description ?? "",
     });
     setIsDialogOpen(true);
@@ -177,6 +208,7 @@ export default function SchedulePage() {
         endTime: end,
         subjectId: form.subjectId,
         recurrence: form.recurrence,
+        recurrenceDays: form.recurrenceDays,
         description: form.description || undefined,
       });
       return;
@@ -189,6 +221,7 @@ export default function SchedulePage() {
       endTime: end,
       subjectId: form.subjectId,
       recurrence: form.recurrence === "none" ? undefined : form.recurrence,
+      recurrenceDays: form.recurrenceDays,
       description: form.description || undefined,
     });
   }
@@ -417,9 +450,40 @@ export default function SchedulePage() {
                   <SelectItem value="daily">Daily</SelectItem>
                   <SelectItem value="weekly">Weekly</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {form.recurrence === "custom" && (
+              <div className="grid gap-2">
+                <Label>Choose days</Label>
+                <div className="flex gap-2">
+                  {WEEKDAYS.map((d) => (
+                    <button
+                      key={d.idx}
+                      type="button"
+                      onClick={() => toggleDay(d.idx)}
+                      aria-pressed={daySelected(d.idx)}
+                      className={`rounded-md border px-3 py-2 text-sm ${
+                        daySelected(d.idx)
+                          ? "text-foreground border-transparent bg-gray-300"
+                          : "bg-background"
+                      }`}
+                    >
+                      <div className="flex flex-col items-center">
+                        <span className="text-xs">{d.label}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {form.recurrence === "custom" &&
+                  form.recurrenceDays.length === 0 && (
+                    <p className="text-destructive mt-1 text-xs">
+                      Pick at least one day for a custom recurrence.
+                    </p>
+                  )}
+              </div>
+            )}
             <div className="grid gap-2">
               <Label>Description</Label>
               <Textarea

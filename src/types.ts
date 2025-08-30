@@ -8,6 +8,7 @@ export interface StudySession {
   nextSessionEndDate: Date;
   subject: { id: string; title: string; color: string };
   recurrence?: string | null;
+  recurrenceDays?: number[];
   description?: string | null;
   status: "upcoming" | "in-progress" | "completed" | "due-now" | "overdue";
 }
@@ -36,7 +37,7 @@ export interface Flashcard {
   };
 }
 
-export type RecType = "none" | "daily" | "weekly" | "monthly";
+export type RecType = "none" | "daily" | "weekly" | "monthly" | "custom";
 
 export interface FormState {
   title: string;
@@ -44,6 +45,7 @@ export interface FormState {
   startTime: string;
   endTime: string;
   recurrence: RecType;
+  recurrenceDays: number[];
   description: string;
 }
 

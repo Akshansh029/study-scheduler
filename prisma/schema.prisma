@@ -54,6 +54,7 @@ model StudySession {
     startTime          DateTime
     endTime            DateTime
     recurrence         String?  @default("none") // enum
+    recurrenceDays     Int[]
     nextSessionDate    DateTime
     nextSessionEndDate DateTime
     status             String   @default("upcoming")

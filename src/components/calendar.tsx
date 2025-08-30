@@ -24,6 +24,8 @@ export default function CalendarComponent({
 }: CalendarComponentProps) {
   const calendarRef = useRef<FullCalendar>(null);
 
+  const WEEKDAY_TOKENS = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+
   const transformEvents = (): EventInput[] => {
     return events.map((evt) => {
       const { resource: session } = evt;
@@ -40,22 +42,69 @@ export default function CalendarComponent({
         allDay: false,
       };
 
-      if (session.recurrence && session.recurrence !== "none") {
-        const ms = session.endTime.getTime() - session.startTime.getTime();
-        const hours = Math.floor(ms / (1000 * 60 * 60));
-        const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-        const isoDuration = `PT${hours}H${minutes}M`;
+      const recurrence = session.recurrence ?? "none";
 
-        baseEvent.rrule = {
-          freq: session.recurrence.toUpperCase(),
-          // dtstart: session.startTime,
-          dtstart: moment(session.startTime).format("YYYY-MM-DD[T]HH:mm:ss"),
-          // until: session.endTime, // This was the problematic line for 'until'
-        };
+      if (recurrence && recurrence !== "none") {
+        // Map your app-level recurrence to a valid RRule freq string.
+        // Valid high-level freq values are: 'YEARLY','MONTHLY','WEEKLY','DAILY' (prefer these)
+        let freq: string | undefined;
+        const recurLower = String(recurrence).toLowerCase();
 
-        baseEvent.duration = isoDuration;
+        if (recurLower === "custom") {
+          freq = "WEEKLY";
+        } else if (recurLower === "daily") {
+          freq = "DAILY";
+        } else if (recurLower === "weekly") {
+          freq = "WEEKLY";
+        } else if (recurLower === "monthly") {
+          freq = "MONTHLY";
+        } else {
+          // unsupported recurrence token — skip rrule to avoid breaking calendar
+          console.warn(
+            "Unsupported recurrence token for session",
+            session.id,
+            session.recurrence,
+          );
+          freq = undefined;
+        }
+
+        if (freq) {
+          const ms = session.endTime.getTime() - session.startTime.getTime();
+          const hours = Math.floor(ms / (1000 * 60 * 60));
+          const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+          const isoDuration = `PT${hours}H${minutes}M`;
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const rrule: any = {
+            freq: freq, // e.g. 'WEEKLY'
+            dtstart:
+              session.startTime instanceof Date
+                ? session.startTime.toISOString()
+                : moment(session.startTime).format("YYYY-MM-DD[T]HH:mm:ss"),
+          };
+
+          // If custom weekly days saved, map them to byweekday tokens
+          if (
+            recurLower === "custom" &&
+            Array.isArray(session.recurrenceDays) &&
+            session.recurrenceDays.length
+          ) {
+            rrule.byweekday = session.recurrenceDays
+              .filter((d: number) => Number.isInteger(d) && d >= 0 && d <= 6)
+              .map((d: number) => WEEKDAY_TOKENS[d]);
+          }
+
+          baseEvent.rrule = rrule;
+          baseEvent.duration = isoDuration;
+        }
       }
 
+      console.debug(
+        "session recurrence",
+        session.id,
+        session.recurrence,
+        session.recurrenceDays,
+      );
       return baseEvent;
     });
   };

@@ -73,6 +73,15 @@ export default function SchedulePage() {
     onError: (err) => toast.error(err.message),
   });
 
+  const updateSessionDateMutation = api.session.updateSessionDate.useMutation({
+    onSuccess: () => {
+      toast.success("Next Session date updated");
+      void refetch();
+      closeDialog();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const deleteMutation = api.session.deleteSession.useMutation({
     onSuccess: () => {
       toast.success("Session deleted");
@@ -181,7 +190,7 @@ export default function SchedulePage() {
     setEditing(null);
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.title || !form.subjectId || !form.startTime || !form.endTime) {
       return toast.error("All fields required");
     }
@@ -201,17 +210,43 @@ export default function SchedulePage() {
     // const now = new Date();
 
     if (editing) {
-      updateMutation.mutate({
-        id: editing.id,
-        title: form.title,
-        startTime: start,
-        endTime: end,
-        subjectId: form.subjectId,
-        recurrence: form.recurrence,
-        recurrenceDays: form.recurrenceDays,
-        description: form.description || undefined,
-      });
-      return;
+      try {
+        const updated = await updateMutation.mutateAsync({
+          id: editing.id,
+          title: form.title,
+          startTime: start,
+          endTime: end,
+          subjectId: form.subjectId,
+          recurrence: form.recurrence,
+          recurrenceDays: form.recurrenceDays,
+          description: form.description || undefined,
+        });
+
+        const baseNextDate =
+          updated?.nextSessionDate ??
+          sessions.find((s) => s.id === editing.id)?.nextSessionDate ??
+          start;
+
+        const baseNextEndDate =
+          updated?.nextSessionEndDate ??
+          sessions.find((s) => s.id === editing.id)?.nextSessionEndDate ??
+          end;
+
+        // Call updateSessionDate using the fresh base date.
+        await updateSessionDateMutation.mutateAsync({
+          sessionId: editing.id,
+          recurrence: form.recurrence,
+          recurrenceDays: form.recurrenceDays,
+          nextSessionDate: baseNextDate,
+          nextSessionEndDate: baseNextEndDate,
+        });
+
+        return;
+      } catch (error) {
+        toast.error("Failed to update session");
+        console.error(error);
+        return;
+      }
     }
 
     // create

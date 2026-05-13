@@ -30,7 +30,7 @@ SlotWise is a modern study scheduling and review application that helps students
 ## Screenshots
 
 - Dashboard
-  ![Dashboard](<public/Dashboard.png)
+  ![Dashboard](public/Dashboard.png)
 
 - Schedule page
   ![Schedule page](public/Schedule_page.png)
